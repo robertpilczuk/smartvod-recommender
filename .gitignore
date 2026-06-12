@@ -1,0 +1,14 @@
+# System
+.DS_Store
+
+# Narzędzia Claude Code
+.claude/
+
+# Pliki archiwalne (duplikaty, wersje robocze)
+_archiwum/
+
+# Zależności / artefakty buildów (gdyby powstały)
+node_modules/
+__pycache__/
+*.pyc
+venv/

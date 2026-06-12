@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartVOD Recommender</title>
+
+<!-- Fonty Google: Cormorant Garamond (nagłówki) + DM Sans (treść) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 1 — LANDING PAGE
+════════════════════════════════════════════ -->
+<section class="screen active" id="screen-landing">
+
+  <nav class="nav">
+    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
+    <div class="nav-links">
+      <button class="btn btn-ghost btn-sm" onclick="go('screen-login')">Zaloguj się</button>
+      <button class="btn btn-primary btn-sm" onclick="go('screen-register')">Dołącz za darmo</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="container flex flex-col items-center text-center" style="flex: 1; justify-content: center; padding-top: 48px; padding-bottom: 80px;">
+
+    <div class="badge badge-gold mb-4" style="display:inline-flex;flex-direction:column;align-items:center;gap:2px;border-radius:10px;padding:8px 18px;">
+      <span>Rekomendacje filmów &amp; seriali</span>
+      <span style="font-size:9px;letter-spacing:0.12em;opacity:0.75;">[AI POWERED]</span>
+    </div>
+
+    <h1 class="display display-xl mb-4" style="max-width: 820px;">
+      Twój prywatny<br><span class="italic gold">doradca filmowy</span>
+    </h1>
+
+    <p class="muted mb-8" style="max-width: 520px; font-size: 17px; line-height: 1.7;">
+      SmartVOD uczy się Twojego gustu i poleca filmy idealnie dopasowane do Twojego nastroju — ze wszystkich platform jednocześnie.
+    </p>
+
+    <div class="flex gap-3" style="margin-bottom: 64px;">
+      <button class="btn btn-primary btn-lg" onclick="go('screen-register')">Zacznij za darmo</button>
+      <button class="btn btn-outline btn-lg" onclick="go('screen-recommendations')">Podgląd demo →</button>
+    </div>
+
+    <!-- FEATURE PILLS -->
+    <div class="flex gap-3" style="flex-wrap: wrap; justify-content: center;">
+      <span class="chip selected"><span class="chip-icon">🎯</span> Personalizacja AI</span>
+      <span class="chip selected"><span class="chip-icon">🎬</span> Wszystkie platformy</span>
+      <span class="chip selected"><span class="chip-icon">🧠</span> Uczy się Twojego gustu</span>
+      <span class="chip selected"><span class="chip-icon">🚫</span> Bez reklam</span>
+    </div>
+
+    <!-- MOCK CARDS PREVIEW -->
+    <div class="mt-12" style="display: flex; gap: 16px; opacity: 0.7; overflow: hidden; max-width: 100%;">
+      <div class="movie-card" style="width: 140px; flex-shrink: 0;">
+        <div class="movie-poster"><div class="movie-poster-bg">🎭</div><div class="movie-poster-gradient"></div></div>
+        <div class="movie-info">
+          <div class="movie-title">Oppenheimer</div>
+          <div class="movie-rating"><span class="star">★</span> 8.9</div>
+        </div>
+      </div>
+      <div class="movie-card" style="width: 140px; flex-shrink: 0; margin-top: 24px;">
+        <div class="movie-poster" style="background: #1a1025;"><div class="movie-poster-bg">🌌</div><div class="movie-poster-gradient"></div></div>
+        <div class="movie-info">
+          <div class="movie-title">Interstellar</div>
+          <div class="movie-rating"><span class="star">★</span> 8.7</div>
+        </div>
+      </div>
+      <div class="movie-card" style="width: 140px; flex-shrink: 0;">
+        <div class="movie-poster" style="background: #0f1a14;"><div class="movie-poster-bg">🌿</div><div class="movie-poster-gradient"></div></div>
+        <div class="movie-info">
+          <div class="movie-title">The Bear</div>
+          <div class="movie-rating"><span class="star">★</span> 8.6</div>
+        </div>
+      </div>
+      <div class="movie-card" style="width: 140px; flex-shrink: 0; margin-top: 24px;">
+        <div class="movie-poster" style="background: #1a100a;"><div class="movie-poster-bg">🔥</div><div class="movie-poster-gradient"></div></div>
+        <div class="movie-info">
+          <div class="movie-title">Dune: Część 2</div>
+          <div class="movie-rating"><span class="star">★</span> 8.5</div>
+        </div>
+      </div>
+      <div class="movie-card" style="width: 140px; flex-shrink: 0;">
+        <div class="movie-poster" style="background: #0a1220;"><div class="movie-poster-bg">🌊</div><div class="movie-poster-gradient"></div></div>
+        <div class="movie-info">
+          <div class="movie-title">The Last of Us</div>
+          <div class="movie-rating"><span class="star">★</span> 8.8</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 2 — REJESTRACJA
+════════════════════════════════════════════ -->
+<section class="screen" id="screen-register">
+  <nav class="nav">
+    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
+    <div class="nav-links">
+      <span class="muted" style="font-size: 14px;">Masz już konto?</span>
+      <button class="btn btn-ghost btn-sm" onclick="go('screen-login')">Zaloguj się</button>
+    </div>
+  </nav>
+
+  <div class="container-sm" style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding-top: 20px; padding-bottom: 60px;">
+
+    <div class="text-center mb-8">
+      <h1 class="display display-md mb-2">Utwórz konto</h1>
+      <p class="muted">Kilka kroków dzieli Cię od idealnych rekomendacji</p>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <div class="form-error" id="register-error"></div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="reg-firstname">Imię</label>
+          <input type="text" id="reg-firstname" placeholder="Jan">
+        </div>
+        <div class="form-group">
+          <label for="reg-lastname">Nazwisko</label>
+          <input type="text" id="reg-lastname" placeholder="Kowalski">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="reg-email">E-mail</label>
+        <input type="email" id="reg-email" placeholder="jan@example.com">
+      </div>
+
+      <div class="form-group">
+        <label for="reg-password">Hasło</label>
+        <input type="password" id="reg-password" placeholder="Minimum 8 znaków">
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label for="reg-gender">Płeć</label>
+          <select id="reg-gender">
+            <option>Mężczyzna</option>
+            <option>Kobieta</option>
+            <option>Inne / wolę nie podawać</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="reg-birthdate">Data urodzenia</label>
+          <input type="date" id="reg-birthdate">
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block mt-2" onclick="submitRegister()">
+        Utwórz konto i przejdź dalej →
+      </button>
+
+      <div class="divider-text mt-2">lub</div>
+
+      <button class="btn btn-outline btn-block" style="gap: 10px;">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Kontynuuj z Google
+      </button>
+    </div>
+
+    <p class="text-center mt-4 muted" style="font-size: 13px;">
+      Rejestrując się akceptujesz <a href="#" style="color: var(--gold);">Regulamin</a> i <a href="#" style="color: var(--gold);">Politykę prywatności</a>
+    </p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 3 — LOGOWANIE
+════════════════════════════════════════════ -->
+<section class="screen" id="screen-login">
+  <nav class="nav">
+    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
+    <div class="nav-links">
+      <span class="muted" style="font-size: 14px;">Nowy użytkownik?</span>
+      <button class="btn btn-ghost btn-sm" onclick="go('screen-register')">Zarejestruj się</button>
+    </div>
+  </nav>
+
+  <div class="container-sm" style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding-top: 20px; padding-bottom: 80px;">
+
+    <div class="text-center mb-8">
+      <h1 class="display display-md mb-2">Witaj z powrotem</h1>
+      <p class="muted">Zaloguj się, żeby zobaczyć swoje rekomendacje</p>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <div class="form-error" id="login-error"></div>
+
+      <div class="form-group">
+        <label for="login-email">E-mail</label>
+        <input type="email" id="login-email" placeholder="jan@example.com">
+      </div>
+      <div class="form-group">
+        <label for="login-password">Hasło</label>
+        <input type="password" id="login-password" placeholder="Twoje hasło">
+      </div>
+
+      <div class="flex justify-between items-center mt-1">
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; text-transform: none; letter-spacing: 0; color: var(--muted);">
+          <input type="checkbox" style="width: 16px; height: 16px; accent-color: var(--gold);"> Zapamiętaj mnie
+        </label>
+        <a href="#" style="font-size: 13px; color: var(--gold);">Nie pamiętam hasła</a>
+      </div>
+
+      <button class="btn btn-primary btn-block mt-3" onclick="submitLogin()">Zaloguj się</button>
+
+      <div class="divider-text">lub</div>
+
+      <button class="btn btn-outline btn-block" style="gap: 10px;">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Kontynuuj z Google
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 4 — WYBÓR GATUNKÓW (onboarding)
+════════════════════════════════════════════ -->
+<section class="screen" id="screen-genres">
+
+  <nav class="nav">
+    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
+    <button class="btn btn-ghost btn-sm" onclick="go('screen-mood')">Pomiń →</button>
+  </nav>
+
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" style="width: 33%"></div></div>
+    <div class="progress-steps">
+      <span class="progress-step done">Konto</span>
+      <span class="progress-step done">Gatunki</span>
+      <span class="progress-step">Nastrój</span>
+      <span class="progress-step">Rekomendacje</span>
+    </div>
+  </div>
+
+  <div class="container-md" style="padding-bottom: 60px;">
+    <div class="text-center mb-8">
+      <h1 class="display display-lg mb-2">Co lubisz oglądać?</h1>
+      <p class="muted">Wybierz gatunki, które Cię kręcą. Możesz wybrać kilka — lub wszystkie!</p>
+    </div>
+
+    <div id="genre-grid" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 32px;">
+    </div>
+
+    <div class="text-center">
+      <p class="muted mb-4" style="font-size: 13px;" id="genre-count">Wybrano: 0 gatunków</p>
+      <button class="btn btn-primary btn-lg" onclick="go('screen-mood')">Dalej →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 5 — WYBÓR NASTROJU
+════════════════════════════════════════════ -->
+<section class="screen" id="screen-mood">
+
+  <nav class="nav">
+    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
+    <button class="btn btn-ghost btn-sm" onclick="go('screen-landing')">✕</button>
+  </nav>
+
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" style="width: 66%"></div></div>
+    <div class="progress-steps">
+      <span class="progress-step done">Konto</span>
+      <span class="progress-step done">Gatunki</span>
+      <span class="progress-step done">Nastrój</span>
+      <span class="progress-step">Rekomendacje</span>
+    </div>
+  </div>
+
+  <div class="container-md" style="padding-bottom: 60px;">
+    <div class="text-center mb-8">
+      <h1 class="display display-lg mb-2">Na co masz dzisiaj ochotę?</h1>
+      <p class="muted">Twój nastrój pomaga nam wybrać idealną treść na teraz</p>
+    </div>
+
+    <div class="mood-grid mb-8" id="mood-grid">
+      <div class="mood-card" data-mood="funny" onclick="selectMood(this)">
+        <div class="mood-icon">😂</div>
+        <div class="mood-label">Rozśmiesz mnie</div>
+        <div class="mood-desc">Komedia, absurd</div>
+      </div>
+      <div class="mood-card" data-mood="adrenaline" onclick="selectMood(this)">
+        <div class="mood-icon">😰</div>
+        <div class="mood-label">Adrenalina</div>
+        <div class="mood-desc">Thriller, horror</div>
+      </div>
+      <div class="mood-card" data-mood="surprise" onclick="selectMood(this)">
+        <div class="mood-icon">🤯</div>
+        <div class="mood-label">Zaskocz mnie</div>
+        <div class="mood-desc">Sci-fi, fantasy</div>
+      </div>
+      <div class="mood-card" data-mood="moving" onclick="selectMood(this)">
+        <div class="mood-icon">🥺</div>
+        <div class="mood-label">Wzrusz mnie</div>
+        <div class="mood-desc">Dramat, romans</div>
+      </div>
+      <div class="mood-card" data-mood="inspire" onclick="selectMood(this)">
+        <div class="mood-icon">🧠</div>
+        <div class="mood-label">Zainspiruj mnie</div>
+        <div class="mood-desc">Dokumentalny</div>
+      </div>
+      <div class="mood-card" data-mood="calm" onclick="selectMood(this)">
+        <div class="mood-icon">💤</div>
+        <div class="mood-label">Coś spokojnego</div>
+        <div class="mood-desc">Slice of life</div>
+      </div>
+    </div>
+
+    <!-- Opcjonalnie: czas -->
+    <div class="card mb-6">
+      <h3 class="mb-3">Ile masz czasu? <span class="muted" style="font-weight: 400; font-size: 14px;">(opcjonalnie)</span></h3>
+      <div class="flex gap-2" style="flex-wrap: wrap;" id="time-chips">
+        <button class="chip" onclick="selectTime(this)">do 30 min</button>
+        <button class="chip" onclick="selectTime(this)">do 1,5h</button>
+        <button class="chip selected" onclick="selectTime(this)">do 2h</button>
+        <button class="chip" onclick="selectTime(this)">całe popołudnie</button>
+        <button class="chip" onclick="selectTime(this)">Seriale (odcinek)</button>
+      </div>
+    </div>
+
+    <div class="text-center">
+      <button class="btn btn-primary btn-lg" onclick="startSession()">Pokaż rekomendacje ✨</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 6 — REKOMENDACJE
+════════════════════════════════════════════ -->
+<section class="screen" id="screen-recommendations">
+
+  <nav class="nav">
+    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
+    <div class="nav-links">
+      <button class="btn btn-ghost btn-sm" onclick="go('screen-mood')">← Zmień nastrój</button>
+      <button class="btn btn-outline btn-sm" onclick="go('screen-library')">Moja biblioteka</button>
+    </div>
+  </nav>
+
+  <div class="progress-wrap">
+    <div class="progress-track"><div class="progress-fill" style="width: 100%"></div></div>
+  </div>
+
+  <div class="container" style="padding-bottom: 60px;">
+    <div class="flex items-center justify-between mb-2">
+      <div>
+        <h1 class="display display-sm mb-1">Dzisiaj polecamy dla Ciebie</h1>
+        <p class="muted" style="font-size: 14px;" id="context-line">Na podstawie Twoich preferencji</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="badge badge-gold" id="accepted-count">0 / 5 wybranych</span>
+        <button class="btn btn-primary btn-sm" id="confirm-btn" disabled onclick="go('screen-rate')">Potwierdź wybór →</button>
+      </div>
+    </div>
+
+    <p class="muted mb-6" style="font-size: 13px;">Zaznacz te, które Cię interesują. Odrzucone zastąpimy nowymi propozycjami.</p>
+
+    <div id="movies-grid" class="movies-grid">
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 7 — OCENA WYBRANYCH TYTUŁÓW
+════════════════════════════════════════════ -->
+<section class="screen" id="screen-rate">
+  <nav class="nav">
+    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
+    <button class="btn btn-ghost btn-sm" onclick="go('screen-recommendations')">← Wróć</button>
+  </nav>
+
+  <div class="container-md" style="padding-bottom: 60px;">
+    <div class="text-center mb-8">
+      <div class="badge badge-green mb-3">Dodano do biblioteki ✓</div>
+      <h1 class="display display-lg mb-2">Oceń swój wybór</h1>
+      <p class="muted">Twoja ocena poprawia nasze przyszłe rekomendacje</p>
+    </div>
+
+    <div id="rate-cards" style="display: flex; flex-direction: column; gap: 16px;">
+    </div>
+
+    <div class="text-center mt-8">
+      <button class="btn btn-primary btn-lg" onclick="saveRatingsAndGoLibrary()">Zapisz oceny i przejdź do biblioteki →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     SCREEN 8 — BIBLIOTEKA
+════════════════════════════════════════════ -->
+<section class="screen" id="screen-library">
+  <nav class="nav">
+    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
+    <div class="nav-links">
+      <button class="btn btn-ghost btn-sm" onclick="go('screen-mood')">+ Nowa sesja</button>
+      <button class="btn btn-outline btn-sm">Profil</button>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-bottom: 60px;">
+    <h1 class="display display-md mb-2">Moja biblioteka</h1>
+    <p class="muted mb-8" id="library-greeting">Zapisane tytuły i historia Twojego gustu</p>
+
+    <!-- Statystyki -->
+    <div class="stats-grid">
+      <div class="card text-center">
+        <div class="muted mb-1" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Zapisane</div>
+        <div class="display display-md gold" id="stat-saved">0</div>
+      </div>
+      <div class="card text-center">
+        <div class="muted mb-1" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Obejrzane</div>
+        <div class="display display-md" id="stat-watched">0</div>
+      </div>
+      <div class="card text-center">
+        <div class="muted mb-1" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Śr. ocena</div>
+        <div class="display display-md" id="stat-avg">—</div>
+      </div>
+      <div class="card text-center">
+        <div class="muted mb-1" style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em;">Ulub. gatunek</div>
+        <div class="display display-md" style="font-size: 1.2rem;" id="stat-genre">—</div>
+      </div>
+    </div>
+
+    <h3 class="mb-4">Ostatnio dodane</h3>
+    <div class="library-grid" id="library-grid">
+    </div>
+
+    <div class="mt-12 card" style="display: flex; align-items: center; gap: 20px;">
+      <div style="font-size: 2.5rem;">🤖</div>
+      <div>
+        <h3 class="mb-1">Model się uczy</h3>
+        <p class="muted" style="font-size: 14px;" id="learn-text"></p>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="go('screen-mood')" style="flex-shrink: 0;">Nowa sesja</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
+     MODAL — POWÓD ODRZUCENIA
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="reject-modal">
+  <div class="modal">
+    <h3 class="mb-2">Dlaczego odrzucasz?</h3>
+    <p class="muted mb-6" style="font-size: 14px;" id="modal-movie-title"></p>
+    <div class="flex flex-col gap-2">
+      <button class="btn btn-outline btn-block" style="justify-content: flex-start; gap: 12px; padding: 16px 20px;" onclick="rejectMovie('not-today')">
+        <span style="font-size: 20px;">😴</span>
+        <div style="text-align: left;">
+          <div style="font-weight: 500;">Nie mam na to dzisiaj ochoty</div>
+          <div class="muted" style="font-size: 12px;">Może innym razem — zapamiętamy</div>
+        </div>
+      </button>
+      <button class="btn btn-outline btn-block" style="justify-content: flex-start; gap: 12px; padding: 16px 20px;" onclick="rejectMovie('actor')">
+        <span style="font-size: 20px;">🙅</span>
+        <div style="text-align: left;">
+          <div style="font-weight: 500;">Nie lubię aktora / reżysera</div>
+          <div class="muted" style="font-size: 12px;">Usuniemy podobne pozycje</div>
+        </div>
+      </button>
+      <button class="btn btn-outline btn-block" style="justify-content: flex-start; gap: 12px; padding: 16px 20px;" onclick="rejectMovie('watched')">
+        <span style="font-size: 20px;">✅</span>
+        <div style="text-align: left;">
+          <div style="font-weight: 500;">Już to widziałem/am</div>
+          <div class="muted" style="font-size: 12px;">Nie będziemy tego polecać</div>
+        </div>
+      </button>
+      <button class="btn btn-outline btn-block" style="justify-content: flex-start; gap: 12px; padding: 16px 20px;" onclick="rejectMovie('genre')">
+        <span style="font-size: 20px;">🚫</span>
+        <div style="text-align: left;">
+          <div style="font-weight: 500;">Nie lubię tego gatunku</div>
+          <div class="muted" style="font-size: 12px;">Dostosujemy Twój profil</div>
+        </div>
+      </button>
+    </div>
+    <button class="btn btn-ghost btn-sm btn-block mt-4" onclick="closeModal()">Anuluj</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     MODAL — GDZIE OBEJRZEĆ
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="where-modal">
+  <div class="modal">
+    <h3 class="mb-1" id="where-title">Gdzie obejrzeć</h3>
+    <p class="muted mb-6" style="font-size: 14px;">Dostępność na platformach streamingowych</p>
+    <div class="flex flex-col gap-2" id="where-platforms">
+    </div>
+    <button class="btn btn-ghost btn-sm btn-block mt-4" onclick="closeWhereModal()">Zamknij</button>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
