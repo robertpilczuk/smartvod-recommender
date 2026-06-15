@@ -70,6 +70,19 @@ python3 -m http.server 8080
 # następnie: http://127.0.0.1:8080
 ```
 
+## Testy
+
+```bash
+# Backend (pytest, osobna baza tymczasowa, bez modelu)
+cd backend && source venv/bin/activate
+pip install -r requirements-dev.txt
+python -m pytest
+
+# Frontend (wbudowany test runner Node, bez npm)
+cd frontend
+node --test tests/*.test.mjs
+```
+
 ## Architektura
 
 Aplikacja jest full-stack. Frontend (HTML, CSS, JavaScript) komunikuje się przez

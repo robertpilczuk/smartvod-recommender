@@ -56,6 +56,15 @@ python seed_demo.py
 Logowanie: `demo@smartvod.pl` / `demo`. We frontendzie służy do tego przycisk
 „Zaloguj jako demo" na ekranie logowania.
 
+## Testy
+
+Testy korzystają z osobnej bazy tymczasowej i nie wymagają wytrenowanego modelu.
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
 ## Endpointy
 
 - `GET /api/health` zwraca `{"status": "ok"}`.

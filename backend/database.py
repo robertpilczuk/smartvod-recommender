@@ -1,10 +1,12 @@
+import os
 from pathlib import Path
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-# Plik bazy leży w katalogu backend (poza repozytorium, zawiera dane MovieLens)
-DB_PATH = Path(__file__).resolve().parent / "smartvod.db"
+# Plik bazy leży w katalogu backend (poza repozytorium, zawiera dane MovieLens).
+# Ścieżkę można nadpisać zmienną SMARTVOD_DB (używane w testach).
+DB_PATH = Path(os.environ.get("SMARTVOD_DB") or Path(__file__).resolve().parent / "smartvod.db")
 DATABASE_URL = f"sqlite:///{DB_PATH}"
 
 # check_same_thread=False pozwala korzystać z połączenia w obsłudze żądań FastAPI

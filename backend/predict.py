@@ -10,12 +10,14 @@ Cold start:
 """
 
 import math
+import os
 from pathlib import Path
 
 import joblib
 import numpy as np
 
-MODEL_PATH = Path(__file__).resolve().parent / "model" / "recommender.pkl"
+# Ścieżkę modelu można nadpisać zmienną SMARTVOD_MODEL (używane w testach).
+MODEL_PATH = Path(os.environ.get("SMARTVOD_MODEL") or Path(__file__).resolve().parent / "model" / "recommender.pkl")
 
 _artifact = None
 

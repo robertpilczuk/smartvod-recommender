@@ -18,3 +18,6 @@ venv/
 
 # Artefakty modelu (pochodne danych MovieLens, odtwarzalne przez train_model.py)
 backend/model/
+
+# Cache testów
+.pytest_cache/
