@@ -1,60 +1,60 @@
-# SmartVOD Recommender
+# SmartVOD Recommender. Frontend
 
-Aplikacja webowa do rekomendacji treści filmowych i serialowych z elementami
-personalizacji opartej na preferencjach użytkownika. Prototyp frontendu (SPA)
-zrealizowany w czystym HTML5/CSS3/JavaScript ES6+, bez zewnętrznych frameworków.
+Jednostronicowa aplikacja (SPA) w czystym HTML, CSS i JavaScript, bez frameworków
+i bez procesu budowania. Komunikuje się z backendem przez REST (`js/api.js`),
+a gdy backend jest niedostępny, działa na lokalnym katalogu filmów (tryb demo).
 
-Projekt zaliczeniowy — Praktyka zawodowa (Warsztaty), Lubelska Akademia WSEI.
+Projekt zaliczeniowy. Praktyka zawodowa (Warsztaty), Lubelska Akademia WSEI.
 
 ## Uruchomienie
-
-Aplikacja nie wymaga backendu ani procesu budowania — wystarczy otworzyć
-`index.html` w przeglądarce, albo uruchomić lokalny serwer:
 
 ```bash
 python3 -m http.server 8080
 # następnie: http://127.0.0.1:8080
 ```
 
+Backend uruchamia się osobno (patrz `../backend/README.md`) albo razem przez
+`../run.sh`. Bez backendu działa tryb lokalny.
+
 ## Struktura plików
 
 ```
-smartvod/
-├── index.html      — struktura dokumentu, znaczniki wszystkich 8 ekranów
-├── css/
-│   └── style.css   — pełne stylowanie, zmienne CSS (design tokens), responsywność
-└── js/
-    └── app.js      — logika nawigacji SPA, dobór rekomendacji, stan (localStorage)
+frontend/
+├── index.html      struktura dokumentu i ekrany aplikacji
+├── css/style.css   stylowanie, zmienne CSS, responsywność
+├── js/api.js       klient REST do backendu
+├── js/app.js       nawigacja SPA, dobór rekomendacji, stan
+└── tests/          testy (node --test)
 ```
 
-## Funkcjonalności
+## Przepływ
 
-- Rejestracja i logowanie z walidacją pól (prototyp — bez backendu).
-- Onboarding: wybór preferencji spośród 15 gatunków.
-- Sesja rekomendacyjna: wybór nastroju (6 opcji) i szacowanego czasu wolnego.
-- 5 propozycji dobieranych metodą content-based: punktacja za zgodność
-  z nastrojem (+3) i za każdy wspólny gatunek (+1), z bonusem za ocenę zbiorczą.
-- Odrzucanie propozycji z 4 powodami: „nie dziś" działa jako sygnał tymczasowy
-  (bieżąca sesja), pozostałe powody jako sygnał trwały. Odrzucone tytuły
-  są zastępowane kolejnym najlepszym kandydatem.
-- Ocenianie wybranych tytułów (1–5 gwiazdek) i zapis do biblioteki.
-- Biblioteka ze statystykami wyliczanymi z rzeczywistych danych
-  (liczba zapisanych, obejrzanych, średnia ocena, ulubiony gatunek).
-- Modal „Gdzie obejrzeć" — dostępność tytułu na platformach VOD (dane statyczne).
-- Stan użytkownika utrwalany w localStorage.
+1. Rejestracja lub logowanie (konto demo: `demo@smartvod.pl` / `demo`).
+2. Ekran główny z trzema wejściami: Wybierz nastrój, Podpowiedz film, Zaskocz mnie.
+   Nastrój nie jest wymuszany przy każdej sesji.
+3. Rekomendacje (pięć propozycji z powodami). Dla każdej: Chcę obejrzeć (panel
+   co Ci się podoba) albo Odrzuć (z powodem). Po decyzji pojawia się kolejna.
+4. Biblioteka: tytuły Do obejrzenia i Ocenione, ocena gwiazdkowa po obejrzeniu,
+   statystyki gustu. Modal Gdzie obejrzeć pokazuje platformy VOD (dane demo).
 
-## Tryb podglądu (do testów i dokumentacji)
+Stan konta (identyfikator użytkownika) jest utrwalany w localStorage.
 
-Parametry URL pozwalają otworzyć aplikację w zadanym stanie:
+## Testy
+
+```bash
+node --test tests/*.test.mjs
+```
+
+Testy obejmują klienta `api.js` (zamockowany fetch) i czyste funkcje `app.js`.
+
+## Tryb podglądu (parametry URL)
 
 ```
-index.html?demo=1&screen=screen-recommendations&accept=2
+index.html?demo=1&screen=screen-recommendations
+index.html?demo=1&screen=screen-recommendations&modal=accept
 index.html?demo=1&screen=screen-recommendations&modal=reject
-index.html?demo=1&screen=screen-rate&accept=3&rated=1
 ```
 
-- `demo=1` — przykładowy profil i preferencje
-- `screen=<id>` — otwarcie wskazanego ekranu
-- `accept=<n>` — akceptacja n pierwszych propozycji
-- `modal=reject|where` — otwarcie modala
-- `rated=1` — przykładowe oceny gwiazdkowe
+- `demo=1` przykładowy profil i preferencje (tryb lokalny)
+- `screen=<id>` otwarcie wskazanego ekranu
+- `modal=accept|reject|where` otwarcie modala

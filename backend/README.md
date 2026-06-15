@@ -89,7 +89,8 @@ Konto i dane użytkownika:
 - `PUT /api/preferences` zapisuje gatunki i nastrój.
 - `POST /api/library` dodaje tytuł do biblioteki lub ustawia ocenę gwiazdkową.
 - `GET /api/library/{id}` zwraca bibliotekę z danymi filmów.
-- `POST /api/interactions` zapisuje akcję (accept/reject) z powodem i nastrojem.
+- `POST /api/interactions` zapisuje akcję (accept/reject). Dla akceptacji można
+  przekazać `aspects` (co się podoba), dla odrzucenia `reason`; oba plus `mood`.
 
 Logowanie jest na poziomie demonstracyjnym: hasło haszowane SHA-256 bez soli,
 bez wymagań co do złożoności. Nie jest to mechanizm produkcyjny.

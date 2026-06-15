@@ -19,6 +19,7 @@ Prowadzący: mgr inż. Tomasz Piętas.
 │   ├── index.html                              — struktura 8 ekranów
 │   ├── css/style.css                           — stylowanie, design tokens, responsywność
 │   ├── js/app.js                               — logika SPA, dobór rekomendacji, stan
+│   ├── js/api.js                               — klient REST do backendu
 │   └── README.md                               — opis aplikacji i instrukcja uruchomienia
 ├── backend/                                     — API FastAPI, baza i moduł rekomendacji
 │   ├── main.py                                 — endpointy REST

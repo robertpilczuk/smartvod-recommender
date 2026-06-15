@@ -31,7 +31,24 @@ Endpointy REST:
 - `POST /api/register`, `POST /api/login`, `GET /api/user/{id}` konto.
 - `PUT /api/preferences` zapis gatunków i nastroju.
 - `POST /api/library`, `GET /api/library/{id}` biblioteka i oceny.
-- `POST /api/interactions` akceptacje i odrzucenia z powodem.
+- `POST /api/interactions` akceptacje (z zaznaczeniem co się podoba) i odrzucenia z powodem.
+
+## Przepływ użytkownika
+
+1. Rejestracja lub logowanie. Konto demo: `demo@smartvod.pl` / `demo`.
+2. Przy rejestracji onboarding gatunków (można pominąć).
+3. Ekran główny z trzema wejściami w sesję:
+   - Wybierz nastrój: ekran nastroju, potem rekomendacje pod nastrój.
+   - Podpowiedz film: rekomendacje na podstawie zapisanych gatunków, bez nastroju.
+   - Zaskocz mnie: rekomendacje z poluzowanymi filtrami i przetasowaniem.
+   Nastrój nie jest wymuszany przy każdej sesji.
+4. Ekran rekomendacji pokazuje pięć propozycji z wynikiem i powodami. Dla każdej:
+   - Chcę obejrzeć: panel co Ci się podoba (gatunek, klimat, obsada, fabuła).
+     Tytuł trafia do biblioteki, a wybrane cechy zapisujemy jako interakcję.
+   - Odrzuć: wybór powodu. Powód trafia do interakcji i wpływa na kolejne propozycje.
+   Po każdej decyzji na miejscu karty pojawia się kolejna propozycja.
+5. Biblioteka dzieli tytuły na Do obejrzenia i Ocenione. Ocenę gwiazdkową
+   wystawia się po obejrzeniu, w bibliotece. Tu też widać statystyki gustu.
 
 ## Dane MovieLens 1M
 
@@ -102,9 +119,10 @@ dopasowanie gatunkowe i nastrój wybrane podczas onboardingu.
   soli i bez wymagań co do złożoności. Nie jest to mechanizm produkcyjny.
 - Wagi wyniku hybrydowego i próg liczby ocen dobrano eksploracyjnie. Mają
   charakter demonstracyjny, nie były strojone na osobnym zbiorze walidacyjnym.
-- Model trenowany jest na danych MovieLens. Oceny wystawiane przez konta
-  aplikacji nie powodują ponownego treningu, więc personalizacja modelu dla
-  nowych użytkowników opiera się na cold starcie i sygnałach treściowych.
+- Model trenowany jest na danych MovieLens. Oceny i sygnały interakcji
+  (akceptacje z zaznaczonymi cechami, odrzucenia z powodem) z kont aplikacji
+  są zapisywane, ale nie powodują ponownego treningu modelu. Personalizacja
+  dla nowych użytkowników opiera się na cold starcie i sygnałach treściowych.
 - Mapowanie gatunków jest przybliżone. MovieLens nie ma osobnej kategorii
   historycznej, więc gatunek Historyczny mapowany jest na War.
 - Dostępność na platformach VOD jest danymi demonstracyjnymi przypisywanymi

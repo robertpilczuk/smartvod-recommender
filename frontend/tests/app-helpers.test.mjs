@@ -22,7 +22,7 @@ function loadApp() {
   global.fetch = async () => ({ ok: true, status: 200, json: async () => ({}) });
   if (!global.structuredClone) global.structuredClone = (x) => JSON.parse(JSON.stringify(x));
 
-  const expr = appSrc + '\n;({ adaptMovie, validEmail, genreCountLabel, demoPlatforms, shuffle });';
+  const expr = appSrc + '\n;({ adaptMovie, validEmail, genreCountLabel, demoPlatforms, shuffle, libraryCard });';
   return eval(expr);
 }
 
@@ -73,4 +73,11 @@ test('shuffle zachowuje wszystkie elementy', () => {
   assert.equal(out.length, input.length);
   assert.deepEqual([...out].sort(), input);
   assert.deepEqual(input, [1, 2, 3, 4, 5]); // nie modyfikuje wejścia
+});
+
+test('libraryCard zapala tyle gwiazdek, ile wynosi ocena', () => {
+  const item = { id: 1, title: 'X', year: 2000, bg: '#000', emoji: '🎬', myRating: 3 };
+  const html = app.libraryCard(item);
+  assert.equal((html.match(/class="s lit"/g) || []).length, 3);
+  assert.ok(html.includes('rateLibraryItem(1, 5)')); // gwiazdki klikalne
 });
