@@ -12,3 +12,6 @@ node_modules/
 __pycache__/
 *.pyc
 venv/
+
+# Baza danych (zawiera dane MovieLens, poza repo)
+*.db
