@@ -30,7 +30,7 @@ frontend/
 ## Przepływ
 
 1. Rejestracja lub logowanie (konto demo: `demo@smartvod.pl` / `demo`).
-2. Ekran główny z trzema wejściami: Wybierz nastrój, Podpowiedz film, Zaskocz mnie.
+2. Ekran główny z trzema wejściami: Wybierz nastrój, Podpowiedz film, Niespodzianka.
    Nastrój nie jest wymuszany przy każdej sesji.
 3. Rekomendacje (pięć propozycji z powodami). Dla każdej: Chcę obejrzeć (panel
    co Ci się podoba) albo Odrzuć (z powodem). Po decyzji pojawia się kolejna.
