@@ -54,6 +54,43 @@ MOOD_MAP = {
     "calm": {"Comedy", "Drama", "Romance", "Children's", "Animation", "Musical"},
 }
 
+# Etykiety nastrojów (jak w interfejsie) do treści wyjaśnień
+MOOD_LABELS = {
+    "funny": "Rozśmiesz mnie",
+    "adrenaline": "Adrenalina",
+    "surprise": "Zaskocz mnie",
+    "moving": "Wzrusz mnie",
+    "inspire": "Zainspiruj mnie",
+    "calm": "Coś spokojnego",
+}
+
+
+def _fmt(x):
+    """Liczba z przecinkiem dziesiętnym (polski zapis)."""
+    return f"{x:.1f}".replace(".", ",")
+
+
+def _build_reasons(genres_pl, mood, movie_genres, predicted_rating, avg, mood_match):
+    """Krótkie wyjaśnienia po polsku, oparte na składnikach wyniku. Maksymalnie trzy."""
+    reasons = []
+    if predicted_rating is not None and predicted_rating >= 4.0:
+        reasons.append(f"Wysoka przewidywana ocena ({_fmt(predicted_rating)}/5)")
+    if genres_pl:
+        matched = [
+            g
+            for g in genres_pl
+            if g != "Wszystko!" and (GENRE_MAP.get(g, set()) & movie_genres)
+        ]
+        for g in matched[:2]:
+            reasons.append(f"Zgodność z gatunkiem {g}")
+    if mood_match and mood in MOOD_LABELS:
+        reasons.append(f"Dopasowanie do nastroju: {MOOD_LABELS[mood]}")
+    if avg >= 4.0:
+        reasons.append(f"Wysoko oceniany przez widzów ({_fmt(avg)}/5)")
+    if not reasons:
+        reasons.append("Popularny tytuł dopasowany do profilu")
+    return reasons[:3]
+
 # Pamięć podręczna statystyk filmów: {movie_id: (avg, count)} oraz średnia globalna
 _stats_cache = None
 _global_mean = None
@@ -170,6 +207,7 @@ def recommend(db, user_id=None, mood=None, genres=None, limit=5):
             + W_MOOD * mood_match
             + W_POP * popularity
         )
+        reasons = _build_reasons(genres, mood, movie_genres, pred_rating, avg, mood_match)
         scored.append(
             {
                 "id": m.id,
@@ -180,6 +218,7 @@ def recommend(db, user_id=None, mood=None, genres=None, limit=5):
                 "rating_count": count,
                 "predicted_rating": round(pred_rating, 2) if pred_rating is not None else None,
                 "score": round(score, 4),
+                "reasons": reasons,
                 "components": {
                     "predicted_rating_norm": round(pred_norm, 4),
                     "genre_match": round(genre_match, 4),
