@@ -229,6 +229,7 @@ class InteractionRequest(BaseModel):
     movie_id: int
     action: str  # accept / reject
     reason: str | None = None
+    aspects: list[str] | None = None  # co się podoba (dla accept)
     mood: str | None = None
 
 
@@ -242,6 +243,7 @@ def api_interaction(req: InteractionRequest, db: Session = Depends(get_db)):
             movie_id=req.movie_id,
             action=req.action,
             reason=req.reason,
+            aspects=json.dumps(req.aspects) if req.aspects else None,
             mood=req.mood,
         )
     )

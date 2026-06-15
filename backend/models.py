@@ -101,6 +101,7 @@ class Interaction(Base):
     movie_id: Mapped[int] = mapped_column(ForeignKey("movies.id"), index=True)
     action: Mapped[str] = mapped_column(String(16))  # accept / reject
     reason: Mapped[str | None] = mapped_column(String(32))  # not-today / actor / watched / genre
+    aspects: Mapped[str | None] = mapped_column(Text)  # co się podoba (lista cech jako JSON, dla accept)
     mood: Mapped[str | None] = mapped_column(String(32))  # nastrój w chwili akcji
     created_at: Mapped[datetime] = mapped_column(default=_now)
 

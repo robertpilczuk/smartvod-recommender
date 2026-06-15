@@ -116,12 +116,12 @@ const SESSION_FETCH = 12;   // ile propozycji pobieramy (5 na ekran + zapas na p
 
 let state = loadState();
 let sessionRejects = [];    // odrzucenia tymczasowe („nie dziś") — tylko bieżąca sesja
-let acceptedMovies = new Set();
 let currentMovies = [];
-let recommendationBuffer = []; // zapas propozycji do podmiany po odrzuceniu
+let recommendationBuffer = []; // zapas propozycji do podmiany po decyzji
 let libraryItems = [];      // ostatnio wyrenderowana biblioteka (do modala „gdzie obejrzeć")
 let pendingRejectId = null;
-let ratingValues = {};
+let pendingAcceptId = null;
+let sessionAdded = 0;       // liczba tytułów dodanych do biblioteki w bieżącej sesji
 let activeScreen = 'screen-landing';
 
 function loadState() {
@@ -164,7 +164,6 @@ function go(id) {
       renderMovies();
     }
   }
-  if (id === 'screen-rate') renderRateCards();
   if (id === 'screen-library') renderLibrary();
 }
 
@@ -375,8 +374,7 @@ async function beginSession(params) {
   }
   saveState();
   sessionRejects = [];
-  acceptedMovies = new Set();
-  ratingValues = {};
+  sessionAdded = 0;
   currentMovies = [];        // pusty stan wymusi świeże pobranie w go()
   recommendationBuffer = [];
   go('screen-recommendations');
@@ -428,13 +426,13 @@ function renderContextLine() {
 
 /* ── EKRAN REKOMENDACJI ────────────────────────────────────── */
 function renderLoadingMovies() {
-  updateAcceptedCount();
+  updateAddedCount();
   document.getElementById('movies-grid').innerHTML =
     '<p class="muted text-center" style="grid-column:1/-1;padding:40px 0;">Dobieramy rekomendacje…</p>';
 }
 
 function renderMovies() {
-  updateAcceptedCount();
+  updateAddedCount();
   const grid = document.getElementById('movies-grid');
   grid.innerHTML = '';
   if (currentMovies.length === 0) {
@@ -443,7 +441,7 @@ function renderMovies() {
   }
   currentMovies.forEach(movie => {
     const el = document.createElement('div');
-    el.className = 'movie-card' + (acceptedMovies.has(movie.id) ? ' accepted' : '');
+    el.className = 'movie-card';
     el.id = `movie-${movie.id}`;
     const reasonsHtml = (movie.reasons && movie.reasons.length)
       ? `<ul class="movie-reasons">${movie.reasons.map(r => `<li>${r}</li>`).join('')}</ul>`
@@ -464,7 +462,7 @@ function renderMovies() {
       </div>
       <div class="movie-actions" style="flex-direction:column;">
         <div style="display:flex;gap:8px;">
-          <button class="btn btn-primary btn-sm" style="flex:1;" onclick="acceptMovie(${movie.id})">✓ Chcę</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;" onclick="openAcceptModal(${movie.id})">✓ Chcę obejrzeć</button>
           <button class="btn btn-outline btn-sm" onclick="openRejectModal(${movie.id})">✕</button>
         </div>
         <button class="btn btn-ghost btn-sm" style="padding:6px;font-size:12px;color:var(--gold);" onclick="openWhereModal(${movie.id})">📍 Gdzie obejrzeć?</button>
@@ -474,22 +472,63 @@ function renderMovies() {
   });
 }
 
-function acceptMovie(id) {
-  const card = document.getElementById(`movie-${id}`);
-  if (acceptedMovies.has(id)) {
-    acceptedMovies.delete(id);
-    card.classList.remove('accepted');
-  } else {
-    acceptedMovies.add(id);
-    card.classList.add('accepted');
-  }
-  updateAcceptedCount();
+function updateAddedCount() {
+  const el = document.getElementById('added-count');
+  if (el) el.textContent = `Dodane: ${sessionAdded}`;
 }
 
-function updateAcceptedCount() {
-  const n = acceptedMovies.size;
-  document.getElementById('accepted-count').textContent = `${n} / 5 wybranych`;
-  document.getElementById('confirm-btn').disabled = n === 0;
+// Podmiana karty po decyzji (akceptacja albo odrzucenie) na następną propozycję
+function advanceCard(id) {
+  const idx = currentMovies.findIndex(m => m.id === id);
+  if (idx === -1) return;
+  const replacement = nextReplacement();
+  if (replacement) {
+    currentMovies[idx] = replacement;
+  } else {
+    currentMovies.splice(idx, 1); // brak kandydatów — usuń kartę bez zastępstwa
+  }
+  renderMovies();
+}
+
+/* ── AKCEPTACJA: co Ci się podoba ──────────────────────────── */
+function openAcceptModal(id) {
+  pendingAcceptId = id;
+  const movie = currentMovies.find(m => m.id === id);
+  document.getElementById('accept-movie-title').textContent = movie ? `„${movie.title}"` : '';
+  document.querySelectorAll('#aspect-chips .chip').forEach(c => c.classList.remove('selected'));
+  document.getElementById('accept-modal').classList.add('open');
+}
+
+function closeAcceptModal() {
+  document.getElementById('accept-modal').classList.remove('open');
+  pendingAcceptId = null;
+}
+
+function toggleAspect(el) {
+  el.classList.toggle('selected');
+}
+
+function confirmAccept() {
+  if (pendingAcceptId === null) return;
+  const acceptedId = pendingAcceptId;
+  const aspects = [...document.querySelectorAll('#aspect-chips .chip.selected')].map(c => c.dataset.aspect);
+  closeAcceptModal();
+
+  // Dodanie do biblioteki (bez oceny — ocena po obejrzeniu) i sygnał z cechami
+  if (state.userId) {
+    API.addToLibrary({ user_id: state.userId, movie_id: acceptedId }).catch(() => {});
+    API.recordInteraction({
+      user_id: state.userId, movie_id: acceptedId, action: 'accept', aspects, mood: state.mood,
+    }).catch(() => { /* offline — sygnał zostaje lokalnie */ });
+  } else if (!state.library.find(x => x.id === acceptedId)) {
+    state.library.unshift({ id: acceptedId, rating: 0 });
+    saveState();
+  }
+
+  sessionAdded += 1;
+  const card = document.getElementById(`movie-${acceptedId}`);
+  if (card) card.classList.add('accepted');
+  setTimeout(() => advanceCard(acceptedId), 400);
 }
 
 /* ── ODRZUCANIE PROPOZYCJI (sygnały dla modelu) ────────────── */
@@ -517,8 +556,6 @@ function rejectMovie(reason) {
     state.permanentRejects.push(rejectedId);
     saveState();
   }
-  acceptedMovies.delete(rejectedId);
-
   // Sygnał odrzucenia do backendu (bez blokowania UI)
   if (state.userId) {
     API.recordInteraction({
@@ -529,16 +566,7 @@ function rejectMovie(reason) {
   const card = document.getElementById(`movie-${rejectedId}`);
   if (card) card.classList.add('rejected');
 
-  setTimeout(() => {
-    const replacement = nextReplacement();
-    const idx = currentMovies.findIndex(m => m.id === rejectedId);
-    if (replacement) {
-      currentMovies[idx] = replacement;
-    } else {
-      currentMovies.splice(idx, 1); // brak kandydatów — usuń kartę bez zastępstwa
-    }
-    renderMovies();
-  }, 600);
+  setTimeout(() => advanceCard(rejectedId), 600);
 }
 
 // Następna propozycja na podmianę: najpierw z bufora API, w trybie demo z lokalnego katalogu
@@ -576,72 +604,6 @@ function openWhereModal(id) {
 
 function closeWhereModal() {
   document.getElementById('where-modal').classList.remove('open');
-}
-
-/* ── OCENIANIE WYBRANYCH TYTUŁÓW ───────────────────────────── */
-function renderRateCards() {
-  const accepted = currentMovies.filter(m => acceptedMovies.has(m.id));
-  const container = document.getElementById('rate-cards');
-  if (accepted.length === 0) {
-    container.innerHTML = '<p class="muted text-center">Brak wybranych filmów.</p>';
-    return;
-  }
-  container.innerHTML = accepted.map(movie => `
-    <div class="card flex items-center gap-4" style="padding:20px 24px;">
-      <div style="width:48px;height:48px;border-radius:8px;background:${movie.bg};display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">${movie.emoji}</div>
-      <div style="flex:1;">
-        <div style="font-weight:500;margin-bottom:4px;">${movie.title}</div>
-        <div class="muted" style="font-size:13px;">${movie.genre}</div>
-      </div>
-      <div class="star-rating" id="stars-${movie.id}">
-        ${[1,2,3,4,5].map(i => `<span class="s" onclick="setRating(${movie.id},${i})" onmouseover="hoverRating(${movie.id},${i})" onmouseleave="unhoverRating(${movie.id})">★</span>`).join('')}
-      </div>
-    </div>
-  `).join('');
-}
-
-function setRating(movieId, stars) {
-  ratingValues[movieId] = stars;
-  const container = document.getElementById(`stars-${movieId}`);
-  container.querySelectorAll('.s').forEach((el, i) => {
-    el.classList.toggle('lit', i < stars);
-  });
-}
-function hoverRating(movieId, stars) {
-  const container = document.getElementById(`stars-${movieId}`);
-  container.querySelectorAll('.s').forEach((el, i) => {
-    el.style.color = i < stars ? 'var(--gold)' : 'var(--border)';
-  });
-}
-function unhoverRating(movieId) {
-  const container = document.getElementById(`stars-${movieId}`);
-  const saved = ratingValues[movieId] || 0;
-  container.querySelectorAll('.s').forEach((el, i) => {
-    el.style.color = '';
-    el.classList.toggle('lit', i < saved);
-  });
-}
-
-async function saveRatingsAndGoLibrary() {
-  const accepted = currentMovies.filter(m => acceptedMovies.has(m.id));
-  if (state.userId) {
-    for (const m of accepted) {
-      try {
-        await API.recordInteraction({ user_id: state.userId, movie_id: m.id, action: 'accept', mood: state.mood });
-        await API.addToLibrary({ user_id: state.userId, movie_id: m.id, rating: ratingValues[m.id] || null });
-      } catch (e) { /* offline — pomijamy, biblioteka pozostanie bez tego tytułu */ }
-    }
-  } else {
-    accepted.forEach(m => {
-      if (!state.library.find(x => x.id === m.id)) {
-        state.library.unshift({ id: m.id, rating: ratingValues[m.id] || 0 });
-      }
-    });
-    saveState();
-  }
-  acceptedMovies = new Set();
-  currentMovies = [];
-  go('screen-library');
 }
 
 /* ── BIBLIOTEKA I STATYSTYKI ───────────────────────────────── */
@@ -716,29 +678,21 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 });
 
 /* ── TRYB PODGLĄDU (parametry URL — do testów i dokumentacji) ─
-   ?demo=1            — przykładowy profil i preferencje
-   ?screen=<id>       — otwarcie wskazanego ekranu
-   ?accept=<n>        — akceptacja n pierwszych propozycji
-   ?modal=reject|where — otwarcie modala
-   ?rated=1           — przykładowe oceny na ekranie oceniania  */
+   ?demo=1                    — przykładowy profil i preferencje
+   ?screen=<id>               — otwarcie wskazanego ekranu
+   ?modal=accept|reject|where — otwarcie modala  */
 (function applyPreviewParams() {
   const p = new URLSearchParams(location.search);
   if (p.get('demo') === '1') {
     state.profile = { firstName: 'Jan', lastName: 'Kowalski', email: 'jan@example.com' };
     state.genres = ['Sci-fi', 'Thriller', 'Dramat', 'Komedia'];
     state.mood = 'surprise';
-  }
-  const accept = parseInt(p.get('accept') || '0', 10);
-  if (accept > 0) {
-    buildSession();
-    currentMovies.slice(0, accept).forEach(m => acceptedMovies.add(m.id));
+    sessionParams = { mood: 'surprise', genres: state.genres, surprise: false };
   }
   const screen = p.get('screen');
   if (screen && document.getElementById(screen)) go(screen);
-  if (p.get('rated') === '1') {
-    currentMovies.filter(m => acceptedMovies.has(m.id)).forEach((m, i) => setRating(m.id, 5 - (i % 2)));
-  }
   const modal = p.get('modal');
+  if (modal === 'accept' && currentMovies.length) openAcceptModal(currentMovies[0].id);
   if (modal === 'reject' && currentMovies.length) openRejectModal(currentMovies[0].id);
   if (modal === 'where' && currentMovies.length) openWhereModal(currentMovies[1]?.id || currentMovies[0].id);
 })();

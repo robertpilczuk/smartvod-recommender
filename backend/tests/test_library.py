@@ -27,6 +27,27 @@ def test_library_invalid_movie_or_user(client):
     assert client.get("/api/library/999999").status_code == 404
 
 
+def test_interaction_stores_aspects(client):
+    import json
+
+    from sqlalchemy import select
+
+    import database
+    import models
+
+    uid = _new_user(client, "asp@b.pl")
+    assert client.post("/api/interactions", json={
+        "user_id": uid, "movie_id": 1, "action": "accept",
+        "aspects": ["genre", "klimat"], "mood": "surprise",
+    }).status_code == 200
+
+    db = database.SessionLocal()
+    row = db.scalar(select(models.Interaction).where(models.Interaction.user_id == uid))
+    db.close()
+    assert row.action == "accept"
+    assert json.loads(row.aspects) == ["genre", "klimat"]
+
+
 def test_interaction_recorded(client):
     uid = _new_user(client, "i@b.pl")
     assert client.post("/api/interactions", json={

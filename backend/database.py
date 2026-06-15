@@ -31,3 +31,12 @@ def init_db():
     import models  # noqa: F401  rejestruje modele w metadanych
 
     Base.metadata.create_all(bind=engine)
+    _migrate()
+
+
+def _migrate():
+    """Dodaje kolumny brakujące w istniejącej bazie (create_all nie zmienia schematu)."""
+    with engine.begin() as conn:
+        cols = [row[1] for row in conn.exec_driver_sql("PRAGMA table_info(interactions)")]
+        if "aspects" not in cols:
+            conn.exec_driver_sql("ALTER TABLE interactions ADD COLUMN aspects TEXT")

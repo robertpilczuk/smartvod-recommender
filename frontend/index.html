@@ -396,12 +396,12 @@
         <p class="muted" style="font-size: 14px;" id="context-line">Na podstawie Twoich preferencji</p>
       </div>
       <div class="flex items-center gap-3">
-        <span class="badge badge-gold" id="accepted-count">0 / 5 wybranych</span>
-        <button class="btn btn-primary btn-sm" id="confirm-btn" disabled onclick="go('screen-rate')">Potwierdź wybór →</button>
+        <span class="badge badge-gold" id="added-count">Dodane: 0</span>
+        <button class="btn btn-primary btn-sm" onclick="go('screen-library')">Przejdź do biblioteki →</button>
       </div>
     </div>
 
-    <p class="muted mb-6" style="font-size: 13px;">Zaznacz te, które Cię interesują. Odrzucone zastąpimy nowymi propozycjami.</p>
+    <p class="muted mb-6" style="font-size: 13px;">Przy każdym tytule wybierz „Chcę obejrzeć" albo odrzuć. Kolejne propozycje pojawią się na bieżąco.</p>
 
     <div id="movies-grid" class="movies-grid">
     </div>
@@ -409,32 +409,7 @@
 </section>
 
 <!-- ════════════════════════════════════════════
-     SCREEN 7 — OCENA WYBRANYCH TYTUŁÓW
-════════════════════════════════════════════ -->
-<section class="screen" id="screen-rate">
-  <nav class="nav">
-    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
-    <button class="btn btn-ghost btn-sm" onclick="go('screen-recommendations')">← Wróć</button>
-  </nav>
-
-  <div class="container-md" style="padding-bottom: 60px;">
-    <div class="text-center mb-8">
-      <div class="badge badge-green mb-3">Dodano do biblioteki ✓</div>
-      <h1 class="display display-lg mb-2">Oceń swój wybór</h1>
-      <p class="muted">Twoja ocena poprawia nasze przyszłe rekomendacje</p>
-    </div>
-
-    <div id="rate-cards" style="display: flex; flex-direction: column; gap: 16px;">
-    </div>
-
-    <div class="text-center mt-8">
-      <button class="btn btn-primary btn-lg" onclick="saveRatingsAndGoLibrary()">Zapisz oceny i przejdź do biblioteki →</button>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════════════════
-     SCREEN 8 — BIBLIOTEKA
+     SCREEN 7 — BIBLIOTEKA
 ════════════════════════════════════════════ -->
 <section class="screen" id="screen-library">
   <nav class="nav">
@@ -483,6 +458,24 @@
     </div>
   </div>
 </section>
+
+<!-- ════════════════════════════════════════════
+     MODAL — CO CI SIĘ PODOBA (akceptacja)
+════════════════════════════════════════════ -->
+<div class="modal-overlay" id="accept-modal">
+  <div class="modal">
+    <h3 class="mb-2">Co Ci się w nim podoba?</h3>
+    <p class="muted mb-6" style="font-size: 14px;" id="accept-movie-title"></p>
+    <div class="flex gap-2 mb-6" style="flex-wrap: wrap;" id="aspect-chips">
+      <button class="chip" data-aspect="genre" onclick="toggleAspect(this)"><span class="chip-icon">🎬</span> Gatunek</button>
+      <button class="chip" data-aspect="klimat" onclick="toggleAspect(this)"><span class="chip-icon">🌌</span> Klimat</button>
+      <button class="chip" data-aspect="obsada" onclick="toggleAspect(this)"><span class="chip-icon">🎭</span> Obsada</button>
+      <button class="chip" data-aspect="fabula" onclick="toggleAspect(this)"><span class="chip-icon">📖</span> Fabuła</button>
+    </div>
+    <button class="btn btn-primary btn-block" onclick="confirmAccept()">Zapisz i dalej →</button>
+    <button class="btn btn-ghost btn-sm btn-block mt-2" onclick="closeAcceptModal()">Anuluj</button>
+  </div>
+</div>
 
 <!-- ════════════════════════════════════════════
      MODAL — POWÓD ODRZUCENIA
