@@ -152,6 +152,7 @@ function go(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
+  if (id === 'screen-home') renderHome();
   if (id === 'screen-genres') renderGenres();
   if (id === 'screen-mood') renderMoodSelection();
   if (id === 'screen-recommendations') {
@@ -228,7 +229,7 @@ async function submitLogin() {
     state.genres = user.genres || [];
     state.mood = user.mood || null;
     saveState();
-    go('screen-mood');
+    go('screen-home');
   } catch (e) {
     showError('login-error', e.message);
   }
@@ -247,9 +248,19 @@ async function demoLogin() {
     state.genres = user.genres || [];
     state.mood = user.mood || null;
     saveState();
-    go('screen-mood');
+    go('screen-home');
   } catch (e) {
     showError('login-error', 'Konto demo niedostępne. W backendzie uruchom: python seed_demo.py');
+  }
+}
+
+/* ── EKRAN GŁÓWNY ──────────────────────────────────────────── */
+function renderHome() {
+  const greeting = document.getElementById('home-greeting');
+  if (greeting) {
+    greeting.textContent = state.profile?.firstName
+      ? `Witaj, ${state.profile.firstName}`
+      : 'Witaj w SmartVOD';
   }
 }
 
@@ -282,14 +293,14 @@ function renderGenres() {
   document.getElementById('genre-count').textContent = genreCountLabel(state.genres.length);
 }
 
-// Zapis wybranych gatunków do backendu, potem przejście do wyboru nastroju
+// Zapis wybranych gatunków do backendu, potem przejście na ekran główny
 async function proceedFromGenres() {
   if (state.userId) {
     try {
       await API.savePreferences({ user_id: state.userId, genres: state.genres });
     } catch (e) { /* brak połączenia — preferencje zostają lokalnie */ }
   }
-  go('screen-mood');
+  go('screen-home');
 }
 
 /* ── WYBÓR NASTROJU I CZASU ────────────────────────────────── */
@@ -343,10 +354,24 @@ function candidatePool(excludeIds = []) {
     .sort((a, b) => scoreMovie(b) - scoreMovie(a) || Math.random() - 0.5);
 }
 
-async function startSession() {
+// Parametry bieżącej sesji ustawiane przez wejścia z ekranu głównego / nastroju
+let sessionParams = { mood: null, genres: [], surprise: false };
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function beginSession(params) {
+  sessionParams = params;
   state.sessionsCount += 1;
-  if (state.userId) {
-    try { await API.savePreferences({ user_id: state.userId, mood: state.mood }); } catch (e) { /* offline */ }
+  state.mood = params.mood;
+  if (state.userId && params.mood) {
+    try { await API.savePreferences({ user_id: state.userId, mood: params.mood }); } catch (e) { /* offline */ }
   }
   saveState();
   sessionRejects = [];
@@ -357,13 +382,26 @@ async function startSession() {
   go('screen-recommendations');
 }
 
+// Wejścia w sesję
+function startSession() {                 // z ekranu nastroju
+  beginSession({ mood: state.mood, genres: state.genres, surprise: false });
+}
+function startSuggest() {                  // „Podpowiedz film" (gatunki, bez nastroju)
+  beginSession({ mood: null, genres: state.genres, surprise: false });
+}
+function startSurprise() {                 // „Zaskocz mnie" (poluzowane filtry)
+  beginSession({ mood: null, genres: [], surprise: true });
+}
+
 async function buildSession() {
+  const { mood, genres, surprise } = sessionParams;
   if (state.userId) {
     try {
       const data = await API.getRecommendations({
-        user_id: state.userId, genres: state.genres, mood: state.mood, limit: SESSION_FETCH,
+        user_id: state.userId, genres, mood, limit: surprise ? 30 : SESSION_FETCH,
       });
-      const all = (data.recommendations || []).map(adaptMovie);
+      let all = (data.recommendations || []).map(adaptMovie);
+      if (surprise) all = shuffle(all);   // szeroki, mniej przewidywalny wachlarz
       currentMovies = all.slice(0, 5);
       recommendationBuffer = all.slice(5);
       return;
@@ -380,8 +418,8 @@ function renderContextLine() {
   const now = new Date();
   const h = now.getHours();
   const part = h < 6 ? 'noc 🌙' : h < 12 ? 'rano ☀️' : h < 18 ? 'popołudnie 🌤' : 'wieczór 🌙';
-  const moodLabel = state.mood
-    ? (document.querySelector(`.mood-card[data-mood="${state.mood}"] .mood-label`)?.textContent || '')
+  const moodLabel = sessionParams.mood
+    ? (document.querySelector(`.mood-card[data-mood="${sessionParams.mood}"] .mood-label`)?.textContent || '')
     : '';
   const moodPart = moodLabel ? `nastrój: ${moodLabel} · ` : '';
   document.getElementById('context-line').textContent =

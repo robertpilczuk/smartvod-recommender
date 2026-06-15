@@ -22,7 +22,7 @@ function loadApp() {
   global.fetch = async () => ({ ok: true, status: 200, json: async () => ({}) });
   if (!global.structuredClone) global.structuredClone = (x) => JSON.parse(JSON.stringify(x));
 
-  const expr = appSrc + '\n;({ adaptMovie, validEmail, genreCountLabel, demoPlatforms });';
+  const expr = appSrc + '\n;({ adaptMovie, validEmail, genreCountLabel, demoPlatforms, shuffle });';
   return eval(expr);
 }
 
@@ -65,4 +65,12 @@ test('genreCountLabel poprawnie odmienia liczbę', () => {
 test('demoPlatforms jest stabilne dla tego samego id', () => {
   assert.deepEqual(app.demoPlatforms(5), app.demoPlatforms(5));
   assert.ok(app.demoPlatforms(5).length >= 1);
+});
+
+test('shuffle zachowuje wszystkie elementy', () => {
+  const input = [1, 2, 3, 4, 5];
+  const out = app.shuffle(input);
+  assert.equal(out.length, input.length);
+  assert.deepEqual([...out].sort(), input);
+  assert.deepEqual(input, [1, 2, 3, 4, 5]); // nie modyfikuje wejścia
 });

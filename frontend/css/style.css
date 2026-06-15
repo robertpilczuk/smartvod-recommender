@@ -220,6 +220,14 @@ select {
 .movie-reasons { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .movie-reasons li { font-size: 11px; color: var(--muted); padding-left: 14px; position: relative; }
 .movie-reasons li::before { content: "✓"; position: absolute; left: 0; color: var(--gold); }
+
+/* Ekran główny: trzy wejścia w sesję */
+.home-options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.home-option { cursor: pointer; text-align: center; padding: 28px 20px; border: 1px solid var(--border); background: var(--card, #161616); transition: border-color 0.15s, transform 0.15s; }
+.home-option:hover { border-color: var(--gold); transform: translateY(-2px); }
+.home-option-icon { font-size: 2.2rem; margin-bottom: 10px; }
+.home-option-title { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
+@media (max-width: 640px) { .home-options { grid-template-columns: 1fr; } }
 .movie-actions { display: flex; gap: 8px; padding: 0 16px 14px; }
 
 /* ── GRIDS REKOMENDACJI / BIBLIOTEKI ──────────── */

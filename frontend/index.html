@@ -231,7 +231,7 @@
 
   <nav class="nav">
     <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
-    <button class="btn btn-ghost btn-sm" onclick="go('screen-mood')">Pomiń →</button>
+    <button class="btn btn-ghost btn-sm" onclick="go('screen-home')">Pomiń →</button>
   </nav>
 
   <div class="progress-wrap">
@@ -261,13 +261,48 @@
 </section>
 
 <!-- ════════════════════════════════════════════
+     EKRAN GŁÓWNY — wybór sposobu doboru filmu
+════════════════════════════════════════════ -->
+<section class="screen" id="screen-home">
+  <nav class="nav">
+    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
+    <button class="btn btn-outline btn-sm" onclick="go('screen-library')">Moja biblioteka</button>
+  </nav>
+
+  <div class="container-md" style="padding-bottom: 60px;">
+    <div class="text-center mb-8">
+      <h1 class="display display-lg mb-2" id="home-greeting">Witaj w SmartVOD</h1>
+      <p class="muted">Jak chcesz dobrać film na dziś?</p>
+    </div>
+
+    <div class="home-options">
+      <button class="card home-option" onclick="go('screen-mood')">
+        <div class="home-option-icon">🎭</div>
+        <div class="home-option-title">Wybierz nastrój</div>
+        <div class="muted">Dobierzemy film pod Twój nastrój</div>
+      </button>
+      <button class="card home-option" onclick="startSuggest()">
+        <div class="home-option-icon">✨</div>
+        <div class="home-option-title">Podpowiedz film</div>
+        <div class="muted">Propozycje na podstawie Twoich gatunków</div>
+      </button>
+      <button class="card home-option" onclick="startSurprise()">
+        <div class="home-option-icon">🎲</div>
+        <div class="home-option-title">Zaskocz mnie</div>
+        <div class="muted">Coś spoza utartych ścieżek</div>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
      SCREEN 5 — WYBÓR NASTROJU
 ════════════════════════════════════════════ -->
 <section class="screen" id="screen-mood">
 
   <nav class="nav">
     <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
-    <button class="btn btn-ghost btn-sm" onclick="go('screen-landing')">✕</button>
+    <button class="btn btn-ghost btn-sm" onclick="go('screen-home')">✕</button>
   </nav>
 
   <div class="progress-wrap">
@@ -405,7 +440,7 @@
   <nav class="nav">
     <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
     <div class="nav-links">
-      <button class="btn btn-ghost btn-sm" onclick="go('screen-mood')">+ Nowa sesja</button>
+      <button class="btn btn-ghost btn-sm" onclick="go('screen-home')">+ Nowa sesja</button>
       <button class="btn btn-outline btn-sm">Profil</button>
     </div>
   </nav>
@@ -444,7 +479,7 @@
         <h3 class="mb-1">Model się uczy</h3>
         <p class="muted" style="font-size: 14px;" id="learn-text"></p>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="go('screen-mood')" style="flex-shrink: 0;">Nowa sesja</button>
+      <button class="btn btn-primary btn-sm" onclick="go('screen-home')" style="flex-shrink: 0;">Nowa sesja</button>
     </div>
   </div>
 </section>
