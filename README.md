@@ -15,11 +15,12 @@ Prowadzący: mgr inż. Tomasz Piętas.
 
 ```
 .
-├── smartvod/                                   — aplikacja (prototyp frontendu SPA)
+├── frontend/                                   — aplikacja (frontend SPA)
 │   ├── index.html                              — struktura 8 ekranów
 │   ├── css/style.css                           — stylowanie, design tokens, responsywność
 │   ├── js/app.js                               — logika SPA, dobór rekomendacji, stan
 │   └── README.md                               — opis aplikacji i instrukcja uruchomienia
+├── backend/                                     — API i moduł rekomendacji (w budowie)
 ├── zrzuty/                                      — zrzuty ekranu i diagramy do dokumentacji
 ├── dokumentacja_smartvod_Robert_Pilczuk.docx   — dokumentacja (część wspólna + zakres R. Pilczuka)
 ├── dokumentacja_smartvod_Mateusz_Pichur.docx   — dokumentacja (część wspólna + zakres M. Pichura)
@@ -29,11 +30,11 @@ Prowadzący: mgr inż. Tomasz Piętas.
 
 ## Uruchomienie aplikacji
 
-Aplikacja nie wymaga backendu ani procesu budowania — wystarczy otworzyć
-`smartvod/index.html` w przeglądarce albo uruchomić lokalny serwer:
+Frontend nie wymaga procesu budowania — wystarczy otworzyć
+`frontend/index.html` w przeglądarce albo uruchomić lokalny serwer:
 
 ```bash
-cd smartvod
+cd frontend
 python3 -m http.server 8080
 # następnie: http://127.0.0.1:8080
 ```
