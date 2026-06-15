@@ -44,6 +44,18 @@ python train_model.py
 Zapisuje artefakt do `model/recommender.pkl` (poza repozytorium). Na zbiorze
 testowym: baseline RMSE 1,12; regresja liniowa RMSE 0,93, MAE 0,73, R2 0,31.
 
+## Konto demo
+
+Skrypt zakłada konto demo z preferencjami i biblioteką ocenionych filmów
+(do prezentacji). Wymaga zaimportowanych danych MovieLens.
+
+```bash
+python seed_demo.py
+```
+
+Logowanie: `demo@smartvod.pl` / `demo`. We frontendzie służy do tego przycisk
+„Zaloguj jako demo" na ekranie logowania.
+
 ## Endpointy
 
 - `GET /api/health` zwraca `{"status": "ok"}`.

@@ -20,7 +20,12 @@ Prowadzący: mgr inż. Tomasz Piętas.
 │   ├── css/style.css                           — stylowanie, design tokens, responsywność
 │   ├── js/app.js                               — logika SPA, dobór rekomendacji, stan
 │   └── README.md                               — opis aplikacji i instrukcja uruchomienia
-├── backend/                                     — API i moduł rekomendacji (w budowie)
+├── backend/                                     — API FastAPI, baza i moduł rekomendacji
+│   ├── main.py                                 — endpointy REST
+│   ├── recommend.py / predict.py               — rekomendacje i model oceny
+│   ├── import_movielens.py / train_model.py    — import danych i trening
+│   └── seed_demo.py                            — konto demo
+├── run.sh                                       — uruchomienie backendu i frontendu
 ├── zrzuty/                                      — zrzuty ekranu i diagramy do dokumentacji
 ├── dokumentacja_smartvod_Robert_Pilczuk.docx   — dokumentacja (część wspólna + zakres R. Pilczuka)
 ├── dokumentacja_smartvod_Mateusz_Pichur.docx   — dokumentacja (część wspólna + zakres M. Pichura)
@@ -30,8 +35,34 @@ Prowadzący: mgr inż. Tomasz Piętas.
 
 ## Uruchomienie aplikacji
 
-Frontend nie wymaga procesu budowania — wystarczy otworzyć
-`frontend/index.html` w przeglądarce albo uruchomić lokalny serwer:
+### Pełna aplikacja (backend + frontend)
+
+Przygotowanie backendu (jednorazowo):
+
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python import_movielens.py      # import MovieLens 1M (wymaga ~/Downloads/ml-1m.zip)
+python train_model.py           # trening modelu
+python seed_demo.py             # konto demo do prezentacji
+```
+
+Uruchomienie backendu i frontendu jedną komendą:
+
+```bash
+./run.sh
+# Backend:  http://127.0.0.1:8000
+# Frontend: http://127.0.0.1:8080
+```
+
+Konto demo: `demo@smartvod.pl` / `demo` (przycisk „Zaloguj jako demo").
+Szczegóły backendu i endpointów opisuje `backend/README.md`.
+
+### Sam frontend (tryb demo, bez backendu)
+
+Frontend działa też samodzielnie z lokalnym katalogiem filmów:
 
 ```bash
 cd frontend

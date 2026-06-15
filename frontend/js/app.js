@@ -234,6 +234,25 @@ async function submitLogin() {
   }
 }
 
+// Logowanie na gotowe konto demo (do prezentacji)
+async function demoLogin() {
+  clearError('login-error');
+  try {
+    const user = await API.login('demo@smartvod.pl', 'demo');
+    state.userId = user.user_id;
+    state.profile = {
+      firstName: user.first_name || 'Demo', lastName: user.last_name,
+      email: user.email, gender: user.gender, birthdate: user.birthdate,
+    };
+    state.genres = user.genres || [];
+    state.mood = user.mood || null;
+    saveState();
+    go('screen-mood');
+  } catch (e) {
+    showError('login-error', 'Konto demo niedostępne. W backendzie uruchom: python seed_demo.py');
+  }
+}
+
 /* ── ONBOARDING — GATUNKI ──────────────────────────────────── */
 function genreCountLabel(n) {
   if (n === 1) return 'Wybrano: 1 gatunek';
