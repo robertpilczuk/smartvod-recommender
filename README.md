@@ -70,6 +70,15 @@ python3 -m http.server 8080
 # następnie: http://127.0.0.1:8080
 ```
 
+## Architektura
+
+Aplikacja jest full-stack. Frontend (HTML, CSS, JavaScript) komunikuje się przez
+REST z backendem FastAPI, który liczy rekomendacje na danych MovieLens 1M
+zapisanych w SQLite. Rekomendacja łączy przewidywaną ocenę z modelu regresji
+liniowej z dopasowaniem gatunków, nastroju i popularnością filmu.
+
+Pełny opis architektury, danych, modelu i ograniczeń: `docs/architektura.md`.
+
 ## Podział pracy
 
 - **Robert Pilczuk** — koncepcja systemu, analiza wymagań, mechanizm rekomendacji,
