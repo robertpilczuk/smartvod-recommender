@@ -60,6 +60,19 @@ testowym: baseline RMSE 1,12; regresja liniowa RMSE 0,93, MAE 0,73, R2 0,31.
     -d '{"genres":["Sci-fi"],"mood":"surprise","limit":5}'
   ```
 
+Konto i dane użytkownika:
+
+- `POST /api/register` zakłada konto (email, hasło, profil, gatunki) i zwraca profil.
+- `POST /api/login` loguje po emailu i haśle, zwraca profil. Błędne dane: 401.
+- `GET /api/user/{id}` zwraca profil z preferencjami (przywracanie sesji).
+- `PUT /api/preferences` zapisuje gatunki i nastrój.
+- `POST /api/library` dodaje tytuł do biblioteki lub ustawia ocenę gwiazdkową.
+- `GET /api/library/{id}` zwraca bibliotekę z danymi filmów.
+- `POST /api/interactions` zapisuje akcję (accept/reject) z powodem i nastrojem.
+
+Logowanie jest na poziomie demonstracyjnym: hasło haszowane SHA-256 bez soli,
+bez wymagań co do złożoności. Nie jest to mechanizm produkcyjny.
+
 ## Stan
 
 Dostępny endpoint zdrowia, endpoint rekomendacji content-based, konfiguracja CORS
