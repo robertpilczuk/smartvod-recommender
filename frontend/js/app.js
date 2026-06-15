@@ -651,21 +651,48 @@ async function renderLibrary() {
     ? `Zapisane tytuły i historia gustu — ${state.profile.firstName}`
     : 'Zapisane tytuły i historia Twojego gustu';
 
-  document.getElementById('library-grid').innerHTML = items.map(item => `
-    <div class="movie-card" style="cursor:pointer;" onclick="openWhereModal(${item.id})">
-      <div class="movie-poster" style="background:${item.bg};">
+  // Dwie sekcje: tytuły do obejrzenia (bez oceny) i już ocenione
+  const watchlist = items.filter(x => !(x.myRating > 0));
+  const ratedItems = items.filter(x => x.myRating > 0);
+  const section = (title, list) => list.length
+    ? `<h3 class="mb-4">${title}</h3><div class="library-grid mb-8">${list.map(libraryCard).join('')}</div>`
+    : '';
+  const sections = document.getElementById('library-sections');
+  sections.innerHTML = items.length
+    ? section('Do obejrzenia', watchlist) + section('Ocenione', ratedItems)
+    : '<p class="muted">Biblioteka jest pusta. Rozpocznij sesję, aby dodać tytuły.</p>';
+}
+
+// Karta biblioteki z interaktywną oceną gwiazdkową (ocena po obejrzeniu)
+function libraryCard(item) {
+  const stars = [1, 2, 3, 4, 5]
+    .map(i => `<span class="s${i <= item.myRating ? ' lit' : ''}" onclick="rateLibraryItem(${item.id}, ${i})">★</span>`)
+    .join('');
+  return `
+    <div class="movie-card">
+      <div class="movie-poster" style="background:${item.bg};cursor:pointer;" onclick="openWhereModal(${item.id})">
         <div class="movie-poster-bg">${item.emoji}</div>
         <div class="movie-poster-gradient"></div>
       </div>
       <div class="movie-info">
         <div class="movie-title">${item.title}</div>
-        <div class="movie-meta">${item.year}</div>
-        <div class="movie-rating">${item.myRating > 0
-          ? '★'.repeat(item.myRating) + ' <span class="muted" style="font-size:11px;">(moja ocena)</span>'
-          : '<span class="muted" style="font-size:11px;">bez oceny</span>'}</div>
+        <div class="movie-meta">${item.year || ''}</div>
+        <div class="star-rating" title="Oceń po obejrzeniu">${stars}</div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+}
+
+// Zapis oceny tytułu w bibliotece (po obejrzeniu)
+async function rateLibraryItem(movieId, stars) {
+  if (state.userId) {
+    try { await API.addToLibrary({ user_id: state.userId, movie_id: movieId, rating: stars }); }
+    catch (e) { /* offline — pomijamy */ }
+  } else {
+    const it = state.library.find(x => x.id === movieId);
+    if (it) it.rating = stars;
+    saveState();
+  }
+  renderLibrary();  // przelicza statystyki i przenosi tytuł do „Ocenione"
 }
 
 /* ── ZAMYKANIE MODALI KLIKNIĘCIEM W TŁO ────────────────────── */
