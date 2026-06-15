@@ -6,11 +6,13 @@ aplikację, a następnie zasiewa kilka filmów, użytkowników i ocen.
 
 import os
 import tempfile
+from pathlib import Path
 
 # Musi być ustawione przed importem aplikacji (database odczytuje ścieżkę przy imporcie)
 _DB_FD, _DB_PATH = tempfile.mkstemp(suffix=".db")
 os.environ["SMARTVOD_DB"] = _DB_PATH
 os.environ["SMARTVOD_MODEL"] = "/nieistniejacy/recommender.pkl"
+os.environ["SMARTVOD_PROFILES"] = tempfile.mktemp(suffix=".pkl")
 
 import pytest
 from fastapi.testclient import TestClient
@@ -18,6 +20,7 @@ from fastapi.testclient import TestClient
 import database
 import main
 import models
+import predict
 import recommend
 
 # Filmy testowe: różne gatunki i malejące średnie ocen (mid 1 -> 5, mid 5 -> 1)
@@ -56,6 +59,12 @@ def client():
     # Cache statystyk liczony na świeżych danych przy starcie aplikacji
     recommend._stats_cache = None
     recommend._global_mean = None
+
+    # Czyste profile uczenia dla każdego testu
+    predict._profiles = None
+    prof = Path(os.environ["SMARTVOD_PROFILES"])
+    if prof.exists():
+        prof.unlink()
 
     with TestClient(main.app) as c:
         yield c

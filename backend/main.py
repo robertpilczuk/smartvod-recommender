@@ -251,3 +251,43 @@ def api_interaction(req: InteractionRequest, db: Session = Depends(get_db)):
     )
     db.commit()
     return {"status": "ok"}
+
+
+# ── Douczanie modelu na ocenach użytkownika ──────────────────────
+
+
+class LearnRequest(BaseModel):
+    user_id: int
+
+
+@app.post("/api/learn")
+def api_learn(req: LearnRequest, db: Session = Depends(get_db)):
+    """Uczy profil użytkownika z jego ocen w bibliotece (średnia i per gatunek)."""
+    if not db.get(models.User, req.user_id):
+        raise HTTPException(status_code=404, detail="Nie znaleziono użytkownika")
+
+    rows = db.execute(
+        select(models.LibraryItem.movie_id, models.LibraryItem.rating, models.Movie.genres)
+        .join(models.Movie, models.LibraryItem.movie_id == models.Movie.id)
+        .where(
+            models.LibraryItem.user_id == req.user_id,
+            models.LibraryItem.rating.is_not(None),
+        )
+    ).all()
+
+    if not rows:
+        return {
+            "learned": False,
+            "ratings_used": 0,
+            "message": "Oceń najpierw kilka tytułów w bibliotece.",
+        }
+
+    rated = [(mid, rating, genres.split("|") if genres else []) for mid, rating, genres in rows]
+    profile = predict.learn_user(req.user_id, rated)
+    top = sorted(profile["genre"].items(), key=lambda kv: kv[1], reverse=True)[:3]
+    return {
+        "learned": True,
+        "ratings_used": len(rated),
+        "avg_rating": round(profile["mean"], 2),
+        "top_genres": [g for g, _ in top],
+    }
