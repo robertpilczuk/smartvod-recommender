@@ -48,6 +48,7 @@ const SEED_LIBRARY = [
 ];
 
 const DEFAULT_STATE = {
+  userId: null,             // id konta w backendzie (po rejestracji/logowaniu)
   profile: null,            // { firstName, lastName, email, gender, birthdate }
   genres: [],               // preferencje gatunkowe z onboardingu
   mood: null,               // nastrój wybrany przed sesją
@@ -117,7 +118,7 @@ function clearError(elId) {
 
 function validEmail(v) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 
-function submitRegister() {
+async function submitRegister() {
   const firstName = document.getElementById('reg-firstname').value.trim();
   const lastName  = document.getElementById('reg-lastname').value.trim();
   const email     = document.getElementById('reg-email').value.trim();
@@ -125,17 +126,28 @@ function submitRegister() {
   const gender    = document.getElementById('reg-gender').value;
   const birthdate = document.getElementById('reg-birthdate').value;
 
-  if (!firstName)            return showError('register-error', 'Podaj swoje imię.');
-  if (!validEmail(email))    return showError('register-error', 'Podaj poprawny adres e-mail.');
-  if (password.length < 8)   return showError('register-error', 'Hasło musi mieć co najmniej 8 znaków.');
+  if (!firstName)         return showError('register-error', 'Podaj swoje imię.');
+  if (!validEmail(email)) return showError('register-error', 'Podaj poprawny adres e-mail.');
+  if (!password)          return showError('register-error', 'Podaj hasło.');
 
   clearError('register-error');
-  state.profile = { firstName, lastName, email, gender, birthdate };
-  saveState();
-  go('screen-genres');
+  try {
+    const user = await API.register({
+      email, password,
+      first_name: firstName, last_name: lastName,
+      gender, birthdate, genres: state.genres,
+    });
+    state.userId = user.user_id;
+    state.profile = { firstName: user.first_name || firstName, lastName, email, gender, birthdate };
+    state.genres = user.genres || state.genres;
+    saveState();
+    go('screen-genres');
+  } catch (e) {
+    showError('register-error', e.message);
+  }
 }
 
-function submitLogin() {
+async function submitLogin() {
   const email    = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
 
@@ -143,11 +155,21 @@ function submitLogin() {
   if (!password)          return showError('login-error', 'Podaj hasło.');
 
   clearError('login-error');
-  if (!state.profile) {
-    state.profile = { firstName: email.split('@')[0], email };
+  try {
+    const user = await API.login(email, password);
+    state.userId = user.user_id;
+    state.profile = {
+      firstName: user.first_name || email.split('@')[0],
+      lastName: user.last_name, email,
+      gender: user.gender, birthdate: user.birthdate,
+    };
+    state.genres = user.genres || [];
+    state.mood = user.mood || null;
     saveState();
+    go('screen-mood');
+  } catch (e) {
+    showError('login-error', e.message);
   }
-  go('screen-mood');
 }
 
 /* ── ONBOARDING — GATUNKI ──────────────────────────────────── */
@@ -177,6 +199,16 @@ function renderGenres() {
     grid.appendChild(chip);
   });
   document.getElementById('genre-count').textContent = genreCountLabel(state.genres.length);
+}
+
+// Zapis wybranych gatunków do backendu, potem przejście do wyboru nastroju
+async function proceedFromGenres() {
+  if (state.userId) {
+    try {
+      await API.savePreferences({ user_id: state.userId, genres: state.genres });
+    } catch (e) { /* brak połączenia — preferencje zostają lokalnie */ }
+  }
+  go('screen-mood');
 }
 
 /* ── WYBÓR NASTROJU I CZASU ────────────────────────────────── */
