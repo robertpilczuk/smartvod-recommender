@@ -31,6 +31,19 @@ python import_movielens.py --reset          # usuwa dane MovieLens i importuje o
 
 Po imporcie baza zawiera 3883 filmy, 6040 użytkowników MovieLens i 1 000 209 ocen.
 
+## Trening modelu
+
+Model przewiduje ocenę użytkownik-film regresją liniową na czterech cechach
+(średnia użytkownika, średnia ważona filmu, dopasowanie gatunkowe, popularność).
+Wymaga zaimportowanych danych MovieLens.
+
+```bash
+python train_model.py
+```
+
+Zapisuje artefakt do `model/recommender.pkl` (poza repozytorium). Na zbiorze
+testowym: baseline RMSE 1,12; regresja liniowa RMSE 0,93, MAE 0,73, R2 0,31.
+
 ## Endpointy
 
 - `GET /api/health` zwraca `{"status": "ok"}`.

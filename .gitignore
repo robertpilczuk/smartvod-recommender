@@ -15,3 +15,6 @@ venv/
 
 # Baza danych (zawiera dane MovieLens, poza repo)
 *.db
+
+# Artefakty modelu (pochodne danych MovieLens, odtwarzalne przez train_model.py)
+backend/model/
