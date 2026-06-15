@@ -31,8 +31,20 @@ python import_movielens.py --reset          # usuwa dane MovieLens i importuje o
 
 Po imporcie baza zawiera 3883 filmy, 6040 użytkowników MovieLens i 1 000 209 ocen.
 
+## Endpointy
+
+- `GET /api/health` zwraca `{"status": "ok"}`.
+- `POST /api/recommend` zwraca rekomendacje. Body: `user_id`, `mood`, `genres`,
+  `limit` (wszystkie opcjonalne). Wynik filmu to suma składników popularity,
+  genre_match i mood_match; z propozycji odpadają tytuły z biblioteki i odrzucone.
+
+  ```bash
+  curl -s -X POST http://127.0.0.1:8000/api/recommend \
+    -H "Content-Type: application/json" \
+    -d '{"genres":["Sci-fi"],"mood":"surprise","limit":5}'
+  ```
+
 ## Stan
 
-Dostępny jest endpoint `GET /api/health` zwracający `{"status": "ok"}`,
-konfiguracja CORS dla frontendu (porty 8080 i 5173) oraz baza SQLite z danymi
-MovieLens 1M.
+Dostępny endpoint zdrowia, endpoint rekomendacji content-based, konfiguracja CORS
+dla frontendu (porty 8080 i 5173) oraz baza SQLite z danymi MovieLens 1M.

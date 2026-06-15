@@ -1,9 +1,12 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
-from database import init_db
+import recommend
+from database import get_db, init_db
 
 
 @asynccontextmanager
@@ -34,3 +37,22 @@ app.add_middleware(
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+class RecommendRequest(BaseModel):
+    user_id: int | None = None
+    mood: str | None = None
+    genres: list[str] | None = None
+    limit: int = 5
+
+
+@app.post("/api/recommend")
+def api_recommend(req: RecommendRequest, db: Session = Depends(get_db)):
+    items = recommend.recommend(
+        db,
+        user_id=req.user_id,
+        mood=req.mood,
+        genres=req.genres,
+        limit=req.limit,
+    )
+    return {"recommendations": items}
