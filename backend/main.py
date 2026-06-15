@@ -5,13 +5,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+import predict
 import recommend
-from database import get_db, init_db
+from database import SessionLocal, get_db, init_db
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    # Rozgrzewka cache, by pierwsze żądanie nie ładowało statystyk i modelu na żywo
+    db = SessionLocal()
+    try:
+        recommend._load_stats(db)
+    finally:
+        db.close()
+    if predict.is_ready():
+        predict._load()
     yield
 
 

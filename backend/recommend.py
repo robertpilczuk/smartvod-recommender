@@ -13,11 +13,13 @@ Z kandydatów odpadają tytuły z biblioteki użytkownika i wcześniej odrzucone
 from sqlalchemy import func, select
 
 import models
+import predict
 
 # Wagi składników (dobrane eksploracyjnie, opis w dokumentacji)
-W_POP = 1.0
-W_GENRE = 1.5
+W_PRED = 2.0  # przewidywana ocena z modelu (znormalizowana do 0-1)
+W_GENRE = 1.0
 W_MOOD = 1.0
+W_POP = 0.5
 
 # Minimalna liczba ocen, by film w ogóle był kandydatem
 MIN_RATINGS = 20
@@ -130,15 +132,24 @@ def recommend(db, user_id=None, mood=None, genres=None, limit=5):
     excluded = _excluded_movie_ids(db, user_id)
     stats, mean = _load_stats(db)
 
-    movies = db.execute(select(models.Movie)).scalars().all()
-    scored = []
-    for m in movies:
-        if m.id in excluded:
-            continue
-        avg, count = stats.get(m.id, (0.0, 0))
-        if count < MIN_RATINGS:
-            continue
+    # Kandydaci: dość ocen i nie odfiltrowani
+    candidates = [
+        m
+        for m in db.execute(select(models.Movie)).scalars().all()
+        if m.id not in excluded and stats.get(m.id, (0.0, 0))[1] >= MIN_RATINGS
+    ]
 
+    # Przewidywane oceny z modelu (wsadowo). Gdy brak modelu, hybryda schodzi do baseline.
+    use_model = predict.is_ready()
+    predicted = (
+        predict.predict_ratings(user_id, [m.id for m in candidates])
+        if (use_model and user_id is not None)
+        else {}
+    )
+
+    scored = []
+    for m in candidates:
+        avg, count = stats[m.id]
         movie_genres = set(m.genres.split("|")) if m.genres else set()
 
         popularity = (_weighted_rating(avg, count, mean) - 1.0) / 4.0
@@ -150,7 +161,15 @@ def recommend(db, user_id=None, mood=None, genres=None, limit=5):
             )
         mood_match = 1.0 if (mood_ml and movie_genres & mood_ml) else 0.0
 
-        score = W_POP * popularity + W_GENRE * genre_match + W_MOOD * mood_match
+        pred_rating = predicted.get(m.id)
+        pred_norm = (pred_rating - 1.0) / 4.0 if pred_rating is not None else 0.0
+
+        score = (
+            W_PRED * pred_norm
+            + W_GENRE * genre_match
+            + W_MOOD * mood_match
+            + W_POP * popularity
+        )
         scored.append(
             {
                 "id": m.id,
@@ -159,11 +178,13 @@ def recommend(db, user_id=None, mood=None, genres=None, limit=5):
                 "genres": m.genres,
                 "avg_rating": round(avg, 2),
                 "rating_count": count,
+                "predicted_rating": round(pred_rating, 2) if pred_rating is not None else None,
                 "score": round(score, 4),
                 "components": {
-                    "popularity": round(popularity, 4),
+                    "predicted_rating_norm": round(pred_norm, 4),
                     "genre_match": round(genre_match, 4),
                     "mood_match": mood_match,
+                    "popularity": round(popularity, 4),
                 },
             }
         )

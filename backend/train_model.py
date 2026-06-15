@@ -124,16 +124,23 @@ def main():
     print("Wspolczynniki:", dict(zip(FEATURES, np.round(model.coef_, 4))))
 
     user_mean, movie_wr, movie_count, user_genre_mean = lookups
+
+    # Zapis jako natywne typy Pythona w zagnieżdżonym słowniku — szybkie wczytywanie.
+    # Klucze-krotki o typach numpy odpicklowują się wolno, dlatego ich unikamy.
+    ug_nested = {}
+    for (uid, genre), val in user_genre_mean.items():
+        ug_nested.setdefault(int(uid), {})[str(genre)] = float(val)
+
     artifact = {
         "model": model,
         "features": FEATURES,
         "global_mean": global_mean,
         "smooth_votes": SMOOTH_VOTES,
-        "user_mean": user_mean.to_dict(),
-        "movie_wr": movie_wr.to_dict(),
-        "movie_count": movie_count.to_dict(),
-        "user_genre_mean": user_genre_mean.to_dict(),
-        "movie_genres": {int(k): v for k, v in movie_genres_map.items()},
+        "user_mean": {int(k): float(v) for k, v in user_mean.items()},
+        "movie_wr": {int(k): float(v) for k, v in movie_wr.items()},
+        "movie_count": {int(k): int(v) for k, v in movie_count.items()},
+        "user_genre_mean": ug_nested,
+        "movie_genres": {int(k): list(v) for k, v in movie_genres_map.items()},
         "metrics": {"rmse": rmse, "mae": mae, "r2": r2,
                     "baseline_rmse": base_rmse, "baseline_mae": base_mae},
     }

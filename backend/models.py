@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import ForeignKey, String, Text, UniqueConstraint
+from sqlalchemy import ForeignKey, Index, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from database import Base
@@ -60,7 +60,11 @@ class Rating(Base):
     """Ocena film-użytkownik w skali 1-5 (dane MovieLens oraz oceny aplikacji)."""
 
     __tablename__ = "ratings"
-    __table_args__ = (UniqueConstraint("user_id", "movie_id", name="uq_rating_user_movie"),)
+    __table_args__ = (
+        UniqueConstraint("user_id", "movie_id", name="uq_rating_user_movie"),
+        # Indeks pokrywający przyspiesza agregację średniej i liczby ocen per film
+        Index("ix_ratings_movie_rating", "movie_id", "rating"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)

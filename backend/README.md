@@ -48,8 +48,11 @@ testowym: baseline RMSE 1,12; regresja liniowa RMSE 0,93, MAE 0,73, R2 0,31.
 
 - `GET /api/health` zwraca `{"status": "ok"}`.
 - `POST /api/recommend` zwraca rekomendacje. Body: `user_id`, `mood`, `genres`,
-  `limit` (wszystkie opcjonalne). Wynik filmu to suma składników popularity,
-  genre_match i mood_match; z propozycji odpadają tytuły z biblioteki i odrzucone.
+  `limit` (wszystkie opcjonalne). Wynik filmu to suma składników: przewidywana
+  ocena z modelu (waga 2,0), genre_match (1,0), mood_match (1,0), popularity (0,5).
+  Z propozycji odpadają tytuły z biblioteki i odrzucone. Dla nowego użytkownika
+  (cold start) przewidywana ocena schodzi do wartości globalnej, a ranking
+  napędzają dopasowanie gatunkowe i nastrój.
 
   ```bash
   curl -s -X POST http://127.0.0.1:8000/api/recommend \

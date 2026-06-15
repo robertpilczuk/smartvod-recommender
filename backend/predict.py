@@ -13,6 +13,7 @@ import math
 from pathlib import Path
 
 import joblib
+import numpy as np
 
 MODEL_PATH = Path(__file__).resolve().parent / "model" / "recommender.pkl"
 
@@ -41,8 +42,8 @@ def _features(art, user_id, movie_id):
     movie_count = art["movie_count"].get(movie_id, 0)
 
     genres = art["movie_genres"].get(movie_id, [])
-    ug = art["user_genre_mean"]
-    vals = [ug[(user_id, g)] for g in genres if (user_id, g) in ug]
+    ug = art["user_genre_mean"].get(user_id, {})
+    vals = [ug[g] for g in genres if g in ug]
     genre_affinity = sum(vals) / len(vals) if vals else user_mean
 
     return [user_mean, movie_wr, genre_affinity, math.log1p(movie_count)]
@@ -53,3 +54,16 @@ def predict_rating(user_id, movie_id):
     x = _features(art, user_id, movie_id)
     pred = float(art["model"].predict([x])[0])
     return max(1.0, min(5.0, pred))
+
+
+def predict_ratings(user_id, movie_ids):
+    """Przewiduje oceny użytkownika dla wielu filmów jednym wywołaniem modelu.
+
+    Zwraca słownik {movie_id: ocena 1-5}.
+    """
+    art = _load()
+    if not movie_ids:
+        return {}
+    matrix = np.array([_features(art, user_id, mid) for mid in movie_ids])
+    preds = np.clip(art["model"].predict(matrix), 1.0, 5.0)
+    return {mid: float(p) for mid, p in zip(movie_ids, preds)}
