@@ -448,11 +448,15 @@
 
     <div class="mt-12 card" style="display: flex; align-items: center; gap: 20px;">
       <div style="font-size: 2.5rem;">🤖</div>
-      <div>
-        <h3 class="mb-1">Model się uczy</h3>
+      <div style="flex: 1;">
+        <h3 class="mb-1">Ucz model na swoich ocenach</h3>
         <p class="muted" style="font-size: 14px;" id="learn-text"></p>
+        <p style="font-size: 13px; color: var(--gold); margin-top: 6px;" id="learn-status"></p>
       </div>
-      <button class="btn btn-primary btn-sm" onclick="go('screen-home')" style="flex-shrink: 0;">Nowa sesja</button>
+      <div style="display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;">
+        <button class="btn btn-primary btn-sm" onclick="learnModel()">Naucz na moich ocenach</button>
+        <button class="btn btn-outline btn-sm" onclick="go('screen-home')">Nowa sesja</button>
+      </div>
     </div>
   </div>
 </section>

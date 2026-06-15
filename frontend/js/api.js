@@ -33,6 +33,7 @@ const API = {
   addToLibrary: (payload) => apiRequest('POST', '/api/library', payload),
   getLibrary: (id) => apiRequest('GET', `/api/library/${id}`),
   recordInteraction: (payload) => apiRequest('POST', '/api/interactions', payload),
+  learn: (userId) => apiRequest('POST', '/api/learn', { user_id: userId }),
 };
 
 window.API = API;

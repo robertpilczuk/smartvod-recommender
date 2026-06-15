@@ -720,6 +720,30 @@ async function rateLibraryItem(movieId, stars) {
   renderLibrary();  // przelicza statystyki i przenosi tytuł do „Ocenione"
 }
 
+// Douczanie modelu na ocenach użytkownika (widoczny moment uczenia)
+async function learnModel() {
+  const status = document.getElementById('learn-status');
+  if (!state.userId) {
+    status.textContent = 'Douczanie działa po zalogowaniu (wymaga backendu).';
+    return;
+  }
+  status.textContent = 'Uczenie…';
+  try {
+    const r = await API.learn(state.userId);
+    if (!r.learned) {
+      status.textContent = r.message || 'Brak ocen do nauki.';
+      return;
+    }
+    const pl = (r.top_genres || []).map(g => GENRE_PL[g] || g);
+    const genres = pl.length ? ` Najmocniej cenisz: ${pl.join(', ')}.` : '';
+    const avg = String(r.avg_rating).replace('.', ',');
+    status.textContent =
+      `Model nauczył się z ${r.ratings_used} Twoich ocen (średnia ${avg}).${genres} Kolejne rekomendacje będą trafniejsze.`;
+  } catch (e) {
+    status.textContent = e.message;
+  }
+}
+
 /* ── ZAMYKANIE MODALI KLIKNIĘCIEM W TŁO ────────────────────── */
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', (e) => {
