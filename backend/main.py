@@ -57,6 +57,7 @@ class RecommendRequest(BaseModel):
     mood: str | None = None
     genres: list[str] | None = None
     limit: int = 5
+    surprise: bool = False
 
 
 @app.post("/api/recommend")
@@ -67,6 +68,7 @@ def api_recommend(req: RecommendRequest, db: Session = Depends(get_db)):
         mood=req.mood,
         genres=req.genres,
         limit=req.limit,
+        surprise=req.surprise,
     )
     return {"recommendations": items}
 

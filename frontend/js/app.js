@@ -112,7 +112,7 @@ const DEFAULT_STATE = {
   sessionsCount: 7,
 };
 
-const SESSION_FETCH = 12;   // ile propozycji pobieramy (5 na ekran + zapas na podmiany)
+const SESSION_FETCH = 20;   // ile propozycji pobieramy (5 na ekran + zapas na podmiany)
 
 let state = loadState();
 let sessionRejects = [];    // odrzucenia tymczasowe („nie dziś") — tylko bieżąca sesja
@@ -122,6 +122,7 @@ let libraryItems = [];      // ostatnio wyrenderowana biblioteka (do modala „g
 let pendingRejectId = null;
 let pendingAcceptId = null;
 let sessionAdded = 0;       // liczba tytułów dodanych do biblioteki w bieżącej sesji
+let sessionHandled = new Set(); // id już obsłużone w sesji (nie pokazujemy ponownie)
 let activeScreen = 'screen-landing';
 
 function loadState() {
@@ -375,6 +376,7 @@ async function beginSession(params) {
   saveState();
   sessionRejects = [];
   sessionAdded = 0;
+  sessionHandled = new Set();
   currentMovies = [];        // pusty stan wymusi świeże pobranie w go()
   recommendationBuffer = [];
   go('screen-recommendations');
@@ -392,23 +394,25 @@ function startSurprise() {                 // „Zaskocz mnie" (poluzowane filtr
 }
 
 async function buildSession() {
+  const pool = await fetchPool();
+  currentMovies = pool.slice(0, 5);
+  recommendationBuffer = pool.slice(5);
+}
+
+// Pobranie puli propozycji z backendu (z fallbackiem do lokalnego katalogu)
+async function fetchPool() {
   const { mood, genres, surprise } = sessionParams;
   if (state.userId) {
     try {
       const data = await API.getRecommendations({
-        user_id: state.userId, genres, mood, limit: surprise ? 30 : SESSION_FETCH,
+        user_id: state.userId, genres, mood, surprise, limit: SESSION_FETCH,
       });
-      let all = (data.recommendations || []).map(adaptMovie);
-      if (surprise) all = shuffle(all);   // szeroki, mniej przewidywalny wachlarz
-      currentMovies = all.slice(0, 5);
-      recommendationBuffer = all.slice(5);
-      return;
+      return (data.recommendations || []).map(adaptMovie);
     } catch (e) {
       // brak połączenia z API — fallback do lokalnego katalogu (tryb demo/offline)
     }
   }
-  currentMovies = candidatePool().slice(0, 5);
-  recommendationBuffer = [];
+  return candidatePool();
 }
 
 function renderContextLine() {
@@ -477,17 +481,53 @@ function updateAddedCount() {
   if (el) el.textContent = `Dodane: ${sessionAdded}`;
 }
 
-// Podmiana karty po decyzji (akceptacja albo odrzucenie) na następną propozycję
-function advanceCard(id) {
+// Podmiana karty po decyzji na kolejną propozycję; gdy bufor pusty, dociąga z backendu
+async function advanceCard(id) {
   const idx = currentMovies.findIndex(m => m.id === id);
   if (idx === -1) return;
-  const replacement = nextReplacement();
+  let replacement = takeFromBuffer();
+  if (!replacement && state.userId) {
+    await refillBuffer();
+    replacement = takeFromBuffer();
+  }
+  if (!replacement && !state.userId) {
+    replacement = candidatePool(currentMovies.map(m => m.id))[0];
+  }
   if (replacement) {
     currentMovies[idx] = replacement;
   } else {
-    currentMovies.splice(idx, 1); // brak kandydatów — usuń kartę bez zastępstwa
+    currentMovies.splice(idx, 1); // brak dalszych kandydatów — usuń kartę
   }
   renderMovies();
+}
+
+// Następna propozycja z bufora (pomijając pokazane i już obsłużone w sesji)
+function takeFromBuffer() {
+  const shownIds = new Set(currentMovies.map(m => m.id));
+  while (recommendationBuffer.length) {
+    const cand = recommendationBuffer.shift();
+    if (!shownIds.has(cand.id) && !sessionHandled.has(cand.id) &&
+        !state.permanentRejects.includes(cand.id) && !sessionRejects.includes(cand.id)) {
+      return cand;
+    }
+  }
+  return null;
+}
+
+// Dociągnięcie kolejnych propozycji z backendu, gdy bufor się wyczerpał
+async function refillBuffer() {
+  const pool = await fetchPool();
+  const known = new Set([
+    ...currentMovies.map(m => m.id),
+    ...recommendationBuffer.map(m => m.id),
+    ...sessionHandled,
+  ]);
+  for (const cand of pool) {
+    if (!known.has(cand.id)) {
+      recommendationBuffer.push(cand);
+      known.add(cand.id);
+    }
+  }
 }
 
 /* ── AKCEPTACJA: co Ci się podoba ──────────────────────────── */
@@ -526,6 +566,7 @@ function confirmAccept() {
   }
 
   sessionAdded += 1;
+  sessionHandled.add(acceptedId);
   const card = document.getElementById(`movie-${acceptedId}`);
   if (card) card.classList.add('accepted');
   setTimeout(() => advanceCard(acceptedId), 400);
@@ -563,27 +604,11 @@ function rejectMovie(reason) {
     }).catch(() => { /* offline — sygnał zostaje lokalnie */ });
   }
 
+  sessionHandled.add(rejectedId);
   const card = document.getElementById(`movie-${rejectedId}`);
   if (card) card.classList.add('rejected');
 
   setTimeout(() => advanceCard(rejectedId), 600);
-}
-
-// Następna propozycja na podmianę: najpierw z bufora API, w trybie demo z lokalnego katalogu
-function nextReplacement() {
-  const shownIds = new Set(currentMovies.map(m => m.id));
-  while (recommendationBuffer.length) {
-    const cand = recommendationBuffer.shift();
-    if (!shownIds.has(cand.id) &&
-        !state.permanentRejects.includes(cand.id) &&
-        !sessionRejects.includes(cand.id)) {
-      return cand;
-    }
-  }
-  if (!state.userId) {
-    return candidatePool([...shownIds])[0];
-  }
-  return null;
 }
 
 /* ── MODAL „GDZIE OBEJRZEĆ" ────────────────────────────────── */

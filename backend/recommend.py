@@ -10,6 +10,8 @@ Wynik filmu to suma trzech składników w skali zbliżonej do 0-1:
 Z kandydatów odpadają tytuły z biblioteki użytkownika i wcześniej odrzucone.
 """
 
+import random
+
 from sqlalchemy import func, select
 
 import models
@@ -152,7 +154,7 @@ def _excluded_movie_ids(db, user_id):
     return set(in_library) | set(rejected)
 
 
-def recommend(db, user_id=None, mood=None, genres=None, limit=5):
+def recommend(db, user_id=None, mood=None, genres=None, limit=5, surprise=False):
     # Gatunki: z żądania albo z zapisanych preferencji użytkownika
     if genres is None and user_id is not None:
         pref = db.scalar(
@@ -176,16 +178,29 @@ def recommend(db, user_id=None, mood=None, genres=None, limit=5):
         if m.id not in excluded and stats.get(m.id, (0.0, 0))[1] >= MIN_RATINGS
     ]
 
+    # Nastrój jako twardy filtr gatunków (poza trybem zaskoczenia)
+    if mood_ml and not surprise:
+        in_mood = [m for m in candidates if set(m.genres.split("|")) & mood_ml]
+        if in_mood:
+            candidates = in_mood
+
+    # Tryb zaskoczenia: losowy zestaw z całej puli (inny przy każdym wywołaniu)
+    if surprise:
+        random.shuffle(candidates)
+        to_score = candidates[:limit]
+    else:
+        to_score = candidates
+
     # Przewidywane oceny z modelu (wsadowo). Gdy brak modelu, hybryda schodzi do baseline.
     use_model = predict.is_ready()
     predicted = (
-        predict.predict_ratings(user_id, [m.id for m in candidates])
+        predict.predict_ratings(user_id, [m.id for m in to_score])
         if (use_model and user_id is not None)
         else {}
     )
 
     scored = []
-    for m in candidates:
+    for m in to_score:
         avg, count = stats[m.id]
         movie_genres = set(m.genres.split("|")) if m.genres else set()
 
@@ -228,5 +243,8 @@ def recommend(db, user_id=None, mood=None, genres=None, limit=5):
             }
         )
 
-    scored.sort(key=lambda x: x["score"], reverse=True)
-    return scored[:limit]
+    # Tryb zaskoczenia zachowuje losową kolejność; pozostałe sortujemy wynikiem
+    if not surprise:
+        scored.sort(key=lambda x: x["score"], reverse=True)
+        scored = scored[:limit]
+    return scored

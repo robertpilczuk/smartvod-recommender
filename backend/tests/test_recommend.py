@@ -29,6 +29,20 @@ def test_recommend_excludes_library_and_rejected(client):
     assert 1 not in ids2 and 2 not in ids2
 
 
+def test_recommend_mood_filters_to_mood_genres(client):
+    # nastrój „funny" mapuje na Comedy, więc wraca tylko film komediowy (id 2)
+    recs = client.post("/api/recommend", json={"mood": "funny", "limit": 5}).json()["recommendations"]
+    ids = {x["id"] for x in recs}
+    assert ids == {2}
+
+
+def test_recommend_surprise_returns_random_subset(client):
+    recs = client.post("/api/recommend", json={"surprise": True, "limit": 3}).json()["recommendations"]
+    assert len(recs) == 3
+    # wszystkie z dostępnej puli (pięć zasianych filmów)
+    assert {x["id"] for x in recs} <= {1, 2, 3, 4, 5}
+
+
 def test_recommend_reasons_mention_genre(client):
     recs = client.post("/api/recommend", json={"genres": ["Sci-fi"], "mood": "surprise", "limit": 1}).json()["recommendations"]
     assert any("Sci-fi" in why for why in recs[0]["reasons"])

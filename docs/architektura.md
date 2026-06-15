@@ -38,10 +38,26 @@ Endpointy REST:
 1. Rejestracja lub logowanie. Konto demo: `demo@smartvod.pl` / `demo`.
 2. Przy rejestracji onboarding gatunków (można pominąć).
 3. Ekran główny z trzema wejściami w sesję:
-   - Wybierz nastrój: ekran nastroju, potem rekomendacje pod nastrój.
+   - Wybierz nastrój: ekran nastroju, potem rekomendacje ograniczone do gatunków
+     przypisanych nastrojowi (twardy filtr, patrz tabela niżej).
    - Podpowiedz film: rekomendacje na podstawie zapisanych gatunków, bez nastroju.
-   - Zaskocz mnie: rekomendacje z poluzowanymi filtrami i przetasowaniem.
+   - Zaskocz mnie: losowy zestaw filmów z katalogu, inny przy każdym wejściu.
    Nastrój nie jest wymuszany przy każdej sesji.
+
+   Podział nastrój na gatunki MovieLens:
+
+   | Nastrój | Gatunki |
+   |---------|---------|
+   | Rozśmiesz mnie | Comedy |
+   | Adrenalina | Thriller, Horror, Action |
+   | Zaskocz mnie | Sci-Fi, Fantasy, Mystery, Adventure |
+   | Wzrusz mnie | Drama, Romance |
+   | Zainspiruj mnie | Documentary, War |
+   | Coś spokojnego | Comedy, Drama, Romance, Children's, Animation, Musical |
+
+   Uwaga: wejście „Zaskocz mnie" na ekranie głównym losuje z całego katalogu i nie
+   korzysta z tego podziału. Wiersz „Zaskocz mnie" w tabeli dotyczy nastroju o tej
+   nazwie wybieranego na ekranie nastroju.
 4. Ekran rekomendacji pokazuje pięć propozycji z wynikiem i powodami. Dla każdej:
    - Chcę obejrzeć: panel co Ci się podoba (gatunek, klimat, obsada, fabuła).
      Tytuł trafia do biblioteki, a wybrane cechy zapisujemy jako interakcję.
