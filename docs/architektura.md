@@ -32,6 +32,7 @@ Endpointy REST:
 - `PUT /api/preferences` zapis gatunków i nastroju.
 - `POST /api/library`, `GET /api/library/{id}` biblioteka i oceny.
 - `POST /api/interactions` akceptacje (z zaznaczeniem co się podoba) i odrzucenia z powodem.
+- `POST /api/learn` douczanie profilu użytkownika na jego ocenach.
 
 ## Przepływ użytkownika
 
@@ -129,16 +130,27 @@ Nowy użytkownik aplikacji nie występuje w danych treningowych modelu, więc je
 przewidywana ocena schodzi do wartości globalnej. Ranking napędzają wtedy
 dopasowanie gatunkowe i nastrój wybrane podczas onboardingu.
 
+### Douczanie na ocenach użytkownika
+
+Po wystawieniu ocen w bibliotece użytkownik może kliknąć „Naucz na moich ocenach"
+(endpoint `POST /api/learn`). Aplikacja liczy z tych ocen jego średnią ocenę oraz
+średnie per gatunek i zapisuje profil w `model/user_profiles.pkl` (osobno od
+bazowego modelu). Przy kolejnych predykcjach te wartości zastępują cechy z cold
+startu, więc przewidywane oceny i ranking dopasowują się do gustu użytkownika.
+Współczynniki regresji pozostają bez zmian; uczy się profil cech użytkownika,
+nie cały model.
+
 ## Ograniczenia
 
 - Logowanie jest na poziomie demonstracyjnym. Hasło jest haszowane SHA-256 bez
   soli i bez wymagań co do złożoności. Nie jest to mechanizm produkcyjny.
 - Wagi wyniku hybrydowego i próg liczby ocen dobrano eksploracyjnie. Mają
   charakter demonstracyjny, nie były strojone na osobnym zbiorze walidacyjnym.
-- Model trenowany jest na danych MovieLens. Oceny i sygnały interakcji
-  (akceptacje z zaznaczonymi cechami, odrzucenia z powodem) z kont aplikacji
-  są zapisywane, ale nie powodują ponownego treningu modelu. Personalizacja
-  dla nowych użytkowników opiera się na cold starcie i sygnałach treściowych.
+- Bazowy model (współczynniki regresji) trenowany jest raz, na danych MovieLens,
+  i nie jest trenowany ponownie z danych aplikacji. Douczanie na ocenach
+  użytkownika aktualizuje tylko jego profil cech (średnia i średnie per gatunek),
+  nie współczynniki modelu. Sygnały interakcji (aspekty, odrzucenia) są
+  zapisywane, ale nie wpływają jeszcze na douczanie.
 - Mapowanie gatunków jest przybliżone. MovieLens nie ma osobnej kategorii
   historycznej, więc gatunek Historyczny mapowany jest na War.
 - Dostępność na platformach VOD jest danymi demonstracyjnymi przypisywanymi

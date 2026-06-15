@@ -668,8 +668,9 @@ async function renderLibrary() {
   document.getElementById('stat-genre').textContent = favGenre;
 
   const totalRatings = rated.length;
-  document.getElementById('learn-text').textContent =
-    `Na podstawie Twoich ${state.sessionsCount} sesji i ${totalRatings} ocen SmartVOD coraz lepiej rozumie Twój gust. Kolejne rekomendacje będą jeszcze trafniejsze.`;
+  document.getElementById('learn-text').textContent = totalRatings > 0
+    ? `Masz ${totalRatings} ocenionych tytułów. Kliknij „Naucz na moich ocenach", aby model dopasował przewidywane oceny do Twojego gustu.`
+    : 'Oceń obejrzane tytuły, a potem naucz model na swoich ocenach.';
 
   const greeting = document.getElementById('library-greeting');
   greeting.textContent = state.profile?.firstName

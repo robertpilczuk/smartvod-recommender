@@ -91,6 +91,8 @@ Konto i dane użytkownika:
 - `GET /api/library/{id}` zwraca bibliotekę z danymi filmów.
 - `POST /api/interactions` zapisuje akcję (accept/reject). Dla akceptacji można
   przekazać `aspects` (co się podoba), dla odrzucenia `reason`; oba plus `mood`.
+- `POST /api/learn` douczasz profil użytkownika na jego ocenach z biblioteki
+  (średnia i średnie per gatunek), zapisując go w `model/user_profiles.pkl`.
 
 Logowanie jest na poziomie demonstracyjnym: hasło haszowane SHA-256 bez soli,
 bez wymagań co do złożoności. Nie jest to mechanizm produkcyjny.
