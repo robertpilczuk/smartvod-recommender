@@ -228,6 +228,16 @@ select {
 .home-option-icon { font-size: 2.2rem; margin-bottom: 10px; }
 .home-option-title { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
 @media (max-width: 640px) { .home-options { grid-template-columns: 1fr; } }
+
+/* Karuzela propozycji modelu */
+.carousel-wrap { display: flex; align-items: center; gap: 10px; }
+.carousel { display: flex; gap: 16px; overflow-x: auto; flex: 1; padding: 6px 2px 14px; scroll-snap-type: x mandatory; scrollbar-width: thin; }
+.carousel .movie-card { flex: 0 0 200px; scroll-snap-align: start; }
+.carousel-arrow { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border); color: var(--text); font-size: 20px; line-height: 1; }
+.carousel-arrow:hover { border-color: var(--gold); }
+/* Propozycje modelu wyróżnione zieloną ramką (odróżnienie od złotej akcji) */
+.movie-card.pick { border-color: var(--success); box-shadow: 0 0 0 1px var(--success); }
+.pick-badge { font-size: 11px; color: var(--success); display: block; margin-top: 6px; }
 .movie-actions { display: flex; gap: 8px; padding: 0 16px 14px; }
 
 /* ── GRIDS REKOMENDACJI / BIBLIOTEKI ──────────── */

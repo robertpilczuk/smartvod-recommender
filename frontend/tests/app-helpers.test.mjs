@@ -22,7 +22,7 @@ function loadApp() {
   global.fetch = async () => ({ ok: true, status: 200, json: async () => ({}) });
   if (!global.structuredClone) global.structuredClone = (x) => JSON.parse(JSON.stringify(x));
 
-  const expr = appSrc + '\n;({ adaptMovie, validEmail, genreCountLabel, demoPlatforms, shuffle, libraryCard });';
+  const expr = appSrc + '\n;({ adaptMovie, validEmail, genreCountLabel, demoPlatforms, shuffle, libraryCard, profileCard });';
   return eval(expr);
 }
 
@@ -80,4 +80,13 @@ test('libraryCard zapala tyle gwiazdek, ile wynosi ocena', () => {
   const html = app.libraryCard(item);
   assert.equal((html.match(/class="s lit"/g) || []).length, 3);
   assert.ok(html.includes('rateLibraryItem(1, 5)')); // gwiazdki klikalne
+});
+
+test('profileCard ma zieloną ramkę, przewidywaną ocenę i dodawanie do biblioteki', () => {
+  const item = { id: 7, title: 'Y', year: 2010, genre: 'Sci-fi', bg: '#000', emoji: '🚀', predictedRating: 4.5 };
+  const html = app.profileCard(item);
+  assert.ok(html.includes('movie-card pick'));       // klasa zielonej ramki
+  assert.ok(html.includes('4,5'));                   // przewidywana ocena z przecinkiem
+  assert.ok(html.includes('podpowiedź modelu'));
+  assert.ok(html.includes('addPickToLibrary(7)'));   // dodawanie do biblioteki
 });

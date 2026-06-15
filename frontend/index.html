@@ -462,6 +462,35 @@
 </section>
 
 <!-- ════════════════════════════════════════════
+     EKRAN — TWÓJ PROFIL (po douczeniu)
+════════════════════════════════════════════ -->
+<section class="screen" id="screen-profile">
+  <nav class="nav">
+    <a class="nav-logo" onclick="logoClick()" style="cursor:pointer;">Smart<span>VOD</span></a>
+    <div class="nav-links">
+      <button class="btn btn-ghost btn-sm" onclick="go('screen-home')">+ Nowa sesja</button>
+      <button class="btn btn-outline btn-sm" onclick="go('screen-library')">Moja biblioteka</button>
+    </div>
+  </nav>
+
+  <div class="container" style="padding-bottom: 60px;">
+    <div class="text-center mb-8">
+      <div class="badge badge-gold mb-3">Model nauczony ✓</div>
+      <h1 class="display display-md mb-2">Twój profil gustu</h1>
+      <p class="muted" id="profile-summary"></p>
+    </div>
+
+    <h3 class="mb-1">Filmy, które najprawdopodobniej polubisz</h3>
+    <p class="muted mb-4" style="font-size: 13px;">Podpowiedzi modelu (zielona ramka). Możesz dodać je do biblioteki.</p>
+    <div class="carousel-wrap">
+      <button class="carousel-arrow" onclick="scrollPicks(-1)" aria-label="Poprzednie">‹</button>
+      <div id="profile-carousel" class="carousel"></div>
+      <button class="carousel-arrow" onclick="scrollPicks(1)" aria-label="Następne">›</button>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════
      MODAL — CO CI SIĘ PODOBA (akceptacja)
 ════════════════════════════════════════════ -->
 <div class="modal-overlay" id="accept-modal">

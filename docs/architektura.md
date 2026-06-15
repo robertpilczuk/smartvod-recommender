@@ -140,6 +140,11 @@ startu, więc przewidywane oceny i ranking dopasowują się do gustu użytkownik
 Współczynniki regresji pozostają bez zmian; uczy się profil cech użytkownika,
 nie cały model.
 
+Po douczeniu aplikacja pokazuje ekran profilu: podsumowanie gustu (liczba ocen,
+średnia, najczęściej cenione gatunki) oraz karuzelę filmów o najwyższej
+przewidywanej ocenie. Propozycje modelu wyróżnia zielona ramka i można je dodać
+do biblioteki.
+
 ## Ograniczenia
 
 - Logowanie jest na poziomie demonstracyjnym. Hasło jest haszowane SHA-256 bez

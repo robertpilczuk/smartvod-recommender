@@ -119,6 +119,8 @@ let sessionRejects = [];    // odrzucenia tymczasowe („nie dziś") — tylko b
 let currentMovies = [];
 let recommendationBuffer = []; // zapas propozycji do podmiany po decyzji
 let libraryItems = [];      // ostatnio wyrenderowana biblioteka (do modala „gdzie obejrzeć")
+let learnResult = null;     // wynik ostatniego douczania
+let profilePicks = [];      // propozycje modelu na ekranie profilu
 let pendingRejectId = null;
 let pendingAcceptId = null;
 let sessionAdded = 0;       // liczba tytułów dodanych do biblioteki w bieżącej sesji
@@ -154,6 +156,7 @@ function go(id) {
   document.getElementById(id).classList.add('active');
   window.scrollTo(0, 0);
   if (id === 'screen-home') renderHome();
+  if (id === 'screen-profile') renderProfile();
   if (id === 'screen-genres') renderGenres();
   if (id === 'screen-mood') renderMoodSelection();
   if (id === 'screen-recommendations') {
@@ -615,6 +618,7 @@ function rejectMovie(reason) {
 function openWhereModal(id) {
   const movie = currentMovies.find(m => m.id === id)
     || libraryItems.find(m => m.id === id)
+    || profilePicks.find(m => m.id === id)
     || MOVIES.find(m => m.id === id);
   document.getElementById('where-title').textContent = movie.title;
   const container = document.getElementById('where-platforms');
@@ -721,7 +725,7 @@ async function rateLibraryItem(movieId, stars) {
   renderLibrary();  // przelicza statystyki i przenosi tytuł do „Ocenione"
 }
 
-// Douczanie modelu na ocenach użytkownika (widoczny moment uczenia)
+// Douczanie modelu na ocenach użytkownika, potem ekran profilu z propozycjami
 async function learnModel() {
   const status = document.getElementById('learn-status');
   if (!state.userId) {
@@ -735,14 +739,66 @@ async function learnModel() {
       status.textContent = r.message || 'Brak ocen do nauki.';
       return;
     }
-    const pl = (r.top_genres || []).map(g => GENRE_PL[g] || g);
-    const genres = pl.length ? ` Najmocniej cenisz: ${pl.join(', ')}.` : '';
-    const avg = String(r.avg_rating).replace('.', ',');
-    status.textContent =
-      `Model nauczył się z ${r.ratings_used} Twoich ocen (średnia ${avg}).${genres} Kolejne rekomendacje będą trafniejsze.`;
+    learnResult = r;
+    const data = await API.getRecommendations({ user_id: state.userId, limit: 10 });
+    profilePicks = (data.recommendations || []).map(adaptMovie);
+    status.textContent = '';
+    go('screen-profile');
   } catch (e) {
     status.textContent = e.message;
   }
+}
+
+/* ── EKRAN PROFILU (po douczeniu) ──────────────────────────── */
+function renderProfile() {
+  const r = learnResult || { ratings_used: 0, avg_rating: 0, top_genres: [] };
+  const pl = (r.top_genres || []).map(g => GENRE_PL[g] || g);
+  const avg = String(r.avg_rating).replace('.', ',');
+  document.getElementById('profile-summary').textContent =
+    `Nauczono z ${r.ratings_used} Twoich ocen (średnia ${avg}). Najmocniej cenisz: ${pl.join(', ') || 'różne gatunki'}.`;
+
+  const carousel = document.getElementById('profile-carousel');
+  carousel.innerHTML = profilePicks.length
+    ? profilePicks.map(profileCard).join('')
+    : '<p class="muted">Brak nowych propozycji. Oceń więcej tytułów.</p>';
+}
+
+function profileCard(item) {
+  const pred = item.predictedRating != null
+    ? Number(item.predictedRating).toFixed(1).replace('.', ',')
+    : '—';
+  return `
+    <div class="movie-card pick" id="pick-${item.id}">
+      <div class="movie-poster" style="background:${item.bg};cursor:pointer;" onclick="openWhereModal(${item.id})">
+        <div class="movie-poster-bg">${item.emoji}</div>
+        <div class="movie-poster-gradient"></div>
+      </div>
+      <div class="movie-info">
+        <div class="movie-title">${item.title}</div>
+        <div class="movie-meta">${item.year ? item.year + ' · ' : ''}${item.genre}</div>
+        <div class="movie-rating"><span class="star">★</span> ${pred}
+          &nbsp;·&nbsp; <span style="font-size:11px;color:var(--muted)">przewidywane</span></div>
+        <span class="pick-badge">✓ podpowiedź modelu</span>
+        <button class="btn btn-primary btn-sm mt-2" style="width:100%;" id="pick-add-${item.id}" onclick="addPickToLibrary(${item.id})">+ Do biblioteki</button>
+      </div>
+    </div>`;
+}
+
+async function addPickToLibrary(movieId) {
+  if (state.userId) {
+    try { await API.addToLibrary({ user_id: state.userId, movie_id: movieId }); }
+    catch (e) { /* offline — pomijamy */ }
+  } else if (!state.library.find(x => x.id === movieId)) {
+    state.library.unshift({ id: movieId, rating: 0 });
+    saveState();
+  }
+  const btn = document.getElementById(`pick-add-${movieId}`);
+  if (btn) { btn.textContent = 'Dodano ✓'; btn.disabled = true; }
+}
+
+function scrollPicks(dir) {
+  const c = document.getElementById('profile-carousel');
+  if (c) c.scrollBy({ left: dir * 232, behavior: 'smooth' });
 }
 
 /* ── ZAMYKANIE MODALI KLIKNIĘCIEM W TŁO ────────────────────── */
