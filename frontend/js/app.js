@@ -119,6 +119,7 @@ let sessionRejects = [];    // odrzucenia tymczasowe („nie dziś") — tylko b
 let acceptedMovies = new Set();
 let currentMovies = [];
 let recommendationBuffer = []; // zapas propozycji do podmiany po odrzuceniu
+let libraryItems = [];      // ostatnio wyrenderowana biblioteka (do modala „gdzie obejrzeć")
 let pendingRejectId = null;
 let ratingValues = {};
 let activeScreen = 'screen-landing';
@@ -502,7 +503,9 @@ function nextReplacement() {
 
 /* ── MODAL „GDZIE OBEJRZEĆ" ────────────────────────────────── */
 function openWhereModal(id) {
-  const movie = currentMovies.find(m => m.id === id) || MOVIES.find(m => m.id === id);
+  const movie = currentMovies.find(m => m.id === id)
+    || libraryItems.find(m => m.id === id)
+    || MOVIES.find(m => m.id === id);
   document.getElementById('where-title').textContent = movie.title;
   const container = document.getElementById('where-platforms');
   container.innerHTML = movie.platforms.map(p => `
@@ -562,25 +565,51 @@ function unhoverRating(movieId) {
   });
 }
 
-function saveRatingsAndGoLibrary() {
-  currentMovies
-    .filter(m => acceptedMovies.has(m.id))
-    .forEach(m => {
+async function saveRatingsAndGoLibrary() {
+  const accepted = currentMovies.filter(m => acceptedMovies.has(m.id));
+  if (state.userId) {
+    for (const m of accepted) {
+      try {
+        await API.recordInteraction({ user_id: state.userId, movie_id: m.id, action: 'accept', mood: state.mood });
+        await API.addToLibrary({ user_id: state.userId, movie_id: m.id, rating: ratingValues[m.id] || null });
+      } catch (e) { /* offline — pomijamy, biblioteka pozostanie bez tego tytułu */ }
+    }
+  } else {
+    accepted.forEach(m => {
       if (!state.library.find(x => x.id === m.id)) {
         state.library.unshift({ id: m.id, rating: ratingValues[m.id] || 0 });
       }
     });
-  saveState();
+    saveState();
+  }
   acceptedMovies = new Set();
   currentMovies = [];
   go('screen-library');
 }
 
 /* ── BIBLIOTEKA I STATYSTYKI ───────────────────────────────── */
-function renderLibrary() {
-  const items = state.library
+function libraryFromLocal() {
+  return state.library
     .map(x => ({ ...MOVIES.find(m => m.id === x.id), myRating: x.rating }))
     .filter(x => x.id);
+}
+
+async function renderLibrary() {
+  let items;
+  if (state.userId) {
+    try {
+      const data = await API.getLibrary(state.userId);
+      items = data.library.map(it => ({
+        ...adaptMovie({ id: it.movie_id, title: it.title, year: it.year, genres: it.genres }),
+        myRating: it.rating || 0,
+      }));
+    } catch (e) {
+      items = libraryFromLocal();   // offline — z lokalnego stanu
+    }
+  } else {
+    items = libraryFromLocal();
+  }
+  libraryItems = items;
 
   // Statystyki wyliczane z rzeczywistej zawartości biblioteki
   const rated = items.filter(x => x.myRating > 0);
@@ -655,4 +684,23 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
   const modal = p.get('modal');
   if (modal === 'reject' && currentMovies.length) openRejectModal(currentMovies[0].id);
   if (modal === 'where' && currentMovies.length) openWhereModal(currentMovies[1]?.id || currentMovies[0].id);
+})();
+
+/* ── PRZYWRACANIE SESJI ────────────────────────────────────────
+   Po odświeżeniu odświeżamy profil i preferencje z backendu.
+   Jeśli konto już nie istnieje, czyścimy zapamiętane id. */
+(async function initSession() {
+  if (!state.userId) return;
+  try {
+    const u = await API.getUser(state.userId);
+    state.profile = {
+      firstName: u.first_name, lastName: u.last_name, email: u.email,
+      gender: u.gender, birthdate: u.birthdate,
+    };
+    state.genres = u.genres || state.genres;
+    state.mood = u.mood || state.mood;
+    saveState();
+  } catch (e) {
+    if (e.status === 404) { state.userId = null; saveState(); }
+  }
 })();
