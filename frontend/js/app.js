@@ -35,6 +35,60 @@ const GENRES = [
   { label: 'Wszystko!', icon: '🌈' },
 ];
 
+/* ── ADAPTER WYŚWIETLANIA FILMU MOVIELENS ──────────────────────
+   Backend zwraca filmy z gatunkami po angielsku i bez oprawy wizualnej.
+   Tu dorabiamy etykiety PL, emoji i kolor tła z gatunku oraz demonstracyjną
+   dostępność VOD (statyczna, przypisywana stabilnie po id filmu). */
+const GENRE_PL = {
+  Action: 'Akcja', Adventure: 'Przygodowy', Animation: 'Animacja',
+  "Children's": 'Familijny', Comedy: 'Komedia', Crime: 'Kryminał',
+  Documentary: 'Dokumentalny', Drama: 'Dramat', Fantasy: 'Fantasy',
+  'Film-Noir': 'Kryminał', Horror: 'Horror', Musical: 'Muzyczny',
+  Mystery: 'Kryminał', Romance: 'Romans', 'Sci-Fi': 'Sci-fi',
+  Thriller: 'Thriller', War: 'Wojenny', Western: 'Western',
+};
+const GENRE_EMOJI = {
+  Action: '💥', Adventure: '🗺️', Animation: '🎨', "Children's": '👨‍👩‍👧',
+  Comedy: '😂', Crime: '🔍', Documentary: '🎬', Drama: '🎭', Fantasy: '🧙',
+  'Film-Noir': '🕵️', Horror: '👻', Musical: '🎵', Mystery: '🔎',
+  Romance: '💕', 'Sci-Fi': '🚀', Thriller: '🔪', War: '⚔️', Western: '🤠',
+};
+const GENRE_BG = {
+  Action: '#1a130a', Adventure: '#14110a', Animation: '#1a1225',
+  "Children's": '#1a1408', Comedy: '#1a0f15', Crime: '#140f0f',
+  Documentary: '#0a141a', Drama: '#1a1215', Fantasy: '#0f0f1a',
+  'Film-Noir': '#101010', Horror: '#150a0a', Musical: '#1a1408',
+  Mystery: '#101814', Romance: '#1a0f15', 'Sci-Fi': '#0a1220',
+  Thriller: '#141414', War: '#150f0a', Western: '#14110a',
+};
+const DEMO_PLATFORMS = ['Netflix', 'Max', 'Disney+', 'Prime Video', 'Canal+', 'Apple TV+', 'SkyShowtime'];
+
+function demoPlatforms(id) {
+  // Stabilny wybór 1–2 platform na podstawie id (dane demonstracyjne)
+  const a = DEMO_PLATFORMS[id % DEMO_PLATFORMS.length];
+  const b = DEMO_PLATFORMS[(id * 3 + 1) % DEMO_PLATFORMS.length];
+  return a === b ? [a] : [a, b];
+}
+
+function adaptMovie(apiMovie) {
+  const enGenres = (apiMovie.genres || '').split('|').filter(Boolean);
+  const primary = enGenres[0] || 'Drama';
+  const plGenres = [...new Set(enGenres.map(g => GENRE_PL[g] || g))];
+  return {
+    id: apiMovie.id,
+    title: apiMovie.title,
+    year: apiMovie.year,
+    genre: plGenres.join(' / ') || '—',
+    genres: plGenres,
+    rating: apiMovie.avg_rating,            // średnia ocen widzów (skala 1–5)
+    predictedRating: apiMovie.predicted_rating,
+    reasons: apiMovie.reasons || [],
+    emoji: GENRE_EMOJI[primary] || '🎬',
+    bg: GENRE_BG[primary] || '#141414',
+    platforms: demoPlatforms(apiMovie.id),
+  };
+}
+
 /* ── STAN APLIKACJI (trwały — localStorage) ────────────────── */
 const STORAGE_KEY = 'smartvod_state';
 
@@ -58,10 +112,13 @@ const DEFAULT_STATE = {
   sessionsCount: 7,
 };
 
+const SESSION_FETCH = 12;   // ile propozycji pobieramy (5 na ekran + zapas na podmiany)
+
 let state = loadState();
 let sessionRejects = [];    // odrzucenia tymczasowe („nie dziś") — tylko bieżąca sesja
 let acceptedMovies = new Set();
 let currentMovies = [];
+let recommendationBuffer = []; // zapas propozycji do podmiany po odrzuceniu
 let pendingRejectId = null;
 let ratingValues = {};
 let activeScreen = 'screen-landing';
@@ -97,9 +154,13 @@ function go(id) {
   if (id === 'screen-genres') renderGenres();
   if (id === 'screen-mood') renderMoodSelection();
   if (id === 'screen-recommendations') {
-    if (currentMovies.length === 0) buildSession();
-    renderMovies();
     renderContextLine();
+    if (currentMovies.length === 0) {
+      renderLoadingMovies();
+      buildSession().then(renderMovies);
+    } else {
+      renderMovies();
+    }
   }
   if (id === 'screen-rate') renderRateCards();
   if (id === 'screen-library') renderLibrary();
@@ -262,18 +323,36 @@ function candidatePool(excludeIds = []) {
     .sort((a, b) => scoreMovie(b) - scoreMovie(a) || Math.random() - 0.5);
 }
 
-function startSession() {
+async function startSession() {
   state.sessionsCount += 1;
+  if (state.userId) {
+    try { await API.savePreferences({ user_id: state.userId, mood: state.mood }); } catch (e) { /* offline */ }
+  }
   saveState();
   sessionRejects = [];
   acceptedMovies = new Set();
   ratingValues = {};
-  buildSession();
+  currentMovies = [];        // pusty stan wymusi świeże pobranie w go()
+  recommendationBuffer = [];
   go('screen-recommendations');
 }
 
-function buildSession() {
+async function buildSession() {
+  if (state.userId) {
+    try {
+      const data = await API.getRecommendations({
+        user_id: state.userId, genres: state.genres, mood: state.mood, limit: SESSION_FETCH,
+      });
+      const all = (data.recommendations || []).map(adaptMovie);
+      currentMovies = all.slice(0, 5);
+      recommendationBuffer = all.slice(5);
+      return;
+    } catch (e) {
+      // brak połączenia z API — fallback do lokalnego katalogu (tryb demo/offline)
+    }
+  }
   currentMovies = candidatePool().slice(0, 5);
+  recommendationBuffer = [];
 }
 
 function renderContextLine() {
@@ -290,14 +369,27 @@ function renderContextLine() {
 }
 
 /* ── EKRAN REKOMENDACJI ────────────────────────────────────── */
+function renderLoadingMovies() {
+  updateAcceptedCount();
+  document.getElementById('movies-grid').innerHTML =
+    '<p class="muted text-center" style="grid-column:1/-1;padding:40px 0;">Dobieramy rekomendacje…</p>';
+}
+
 function renderMovies() {
   updateAcceptedCount();
   const grid = document.getElementById('movies-grid');
   grid.innerHTML = '';
+  if (currentMovies.length === 0) {
+    grid.innerHTML = '<p class="muted text-center" style="grid-column:1/-1;padding:40px 0;">Brak dalszych propozycji w tej sesji.</p>';
+    return;
+  }
   currentMovies.forEach(movie => {
     const el = document.createElement('div');
     el.className = 'movie-card' + (acceptedMovies.has(movie.id) ? ' accepted' : '');
     el.id = `movie-${movie.id}`;
+    const reasonsHtml = (movie.reasons && movie.reasons.length)
+      ? `<ul class="movie-reasons">${movie.reasons.map(r => `<li>${r}</li>`).join('')}</ul>`
+      : '';
     el.innerHTML = `
       <div class="movie-poster" style="background:${movie.bg}">
         <div class="movie-poster-bg">${movie.emoji}</div>
@@ -305,11 +397,12 @@ function renderMovies() {
       </div>
       <div class="movie-info">
         <div class="movie-title">${movie.title}</div>
-        <div class="movie-meta">${movie.year} · ${movie.genre} · ${movie.runtime}</div>
+        <div class="movie-meta">${movie.year ? movie.year + ' · ' : ''}${movie.genre}</div>
         <div class="movie-rating">
-          <span class="star">★</span> ${movie.rating}
-          &nbsp;·&nbsp; <span style="font-size:11px;color:var(--muted)">IMDb</span>
+          <span class="star">★</span> ${movie.rating ?? '—'}
+          &nbsp;·&nbsp; <span style="font-size:11px;color:var(--muted)">ocena widzów</span>
         </div>
+        ${reasonsHtml}
       </div>
       <div class="movie-actions" style="flex-direction:column;">
         <div style="display:flex;gap:8px;">
@@ -368,12 +461,18 @@ function rejectMovie(reason) {
   }
   acceptedMovies.delete(rejectedId);
 
+  // Sygnał odrzucenia do backendu (bez blokowania UI)
+  if (state.userId) {
+    API.recordInteraction({
+      user_id: state.userId, movie_id: rejectedId, action: 'reject', reason, mood: state.mood,
+    }).catch(() => { /* offline — sygnał zostaje lokalnie */ });
+  }
+
   const card = document.getElementById(`movie-${rejectedId}`);
   if (card) card.classList.add('rejected');
 
   setTimeout(() => {
-    const shownIds = currentMovies.map(m => m.id);
-    const replacement = candidatePool(shownIds)[0];
+    const replacement = nextReplacement();
     const idx = currentMovies.findIndex(m => m.id === rejectedId);
     if (replacement) {
       currentMovies[idx] = replacement;
@@ -382,6 +481,23 @@ function rejectMovie(reason) {
     }
     renderMovies();
   }, 600);
+}
+
+// Następna propozycja na podmianę: najpierw z bufora API, w trybie demo z lokalnego katalogu
+function nextReplacement() {
+  const shownIds = new Set(currentMovies.map(m => m.id));
+  while (recommendationBuffer.length) {
+    const cand = recommendationBuffer.shift();
+    if (!shownIds.has(cand.id) &&
+        !state.permanentRejects.includes(cand.id) &&
+        !sessionRejects.includes(cand.id)) {
+      return cand;
+    }
+  }
+  if (!state.userId) {
+    return candidatePool([...shownIds])[0];
+  }
+  return null;
 }
 
 /* ── MODAL „GDZIE OBEJRZEĆ" ────────────────────────────────── */
