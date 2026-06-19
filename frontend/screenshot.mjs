@@ -3,10 +3,12 @@
 //   node screenshot.mjs
 import puppeteer from 'puppeteer-core';
 import { mkdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 
 const CHROME = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const BASE = 'http://127.0.0.1:8080/index.html';
-const OUT = new URL('../zrzuty_nowe/', import.meta.url).pathname;
+// fileURLToPath dekoduje spacje w ścieżce (inaczej zostają %20)
+const OUT = fileURLToPath(new URL('../zrzuty_nowe/', import.meta.url));
 mkdirSync(OUT, { recursive: true });
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
