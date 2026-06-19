@@ -1,104 +1,104 @@
 # SmartVOD Recommender
 
-Aplikacja webowa do rekomendacji treści filmowych i serialowych z elementami
-personalizacji opartej na preferencjach użytkownika. Projekt nie streamuje treści —
-pełni rolę doradcy i agregatora, wskazując, na której platformie VOD dostępny jest
-wybrany tytuł.
+Aplikacja webowa do rekomendacji treści filmowych z elementami personalizacji
+opartej na preferencjach użytkownika. Projekt nie streamuje treści — pełni rolę
+doradcy i agregatora, wskazując, na której platformie VOD dostępny jest dany tytuł.
 
 Projekt zaliczeniowy — **Praktyka zawodowa (Warsztaty)**, Lubelska Akademia WSEI,
 Wydział Transportu i Informatyki, kierunek Informatyka.
 
-Zespół projektowy: **Robert Pilczuk** i **Mateusz Pichur**.
-Prowadzący: mgr inż. Tomasz Piętas.
+Zespół: **Robert Pilczuk** i **Mateusz Pichur**. Prowadzący: mgr inż. Tomasz Piętas.
 
-## Zawartość repozytorium
+## Szybki start — jedno polecenie
+
+Wymagania: **Python 3.10+** oraz połączenie z internetem (przy pierwszym
+uruchomieniu pobierany jest zbiór danych). Nic więcej nie trzeba instalować ręcznie.
+
+```bash
+python run.py
+```
+
+To jedno polecenie działa identycznie na **macOS, Linux i Windows**. Przy pierwszym
+uruchomieniu skrypt automatycznie:
+
+1. tworzy środowisko Pythona (`backend/venv`) i instaluje zależności,
+2. pobiera zbiór **MovieLens 1M** z oficjalnego serwera GroupLens,
+3. importuje dane do bazy SQLite, trenuje model i zakłada konto demo,
+4. uruchamia backend (port 8000) i frontend (port 8080) oraz otwiera przeglądarkę.
+
+Kolejne uruchomienia pomijają gotowe kroki i od razu startują aplikację.
+
+```bash
+python run.py --reset   # zbuduj bazę i model od zera
+python run.py --setup   # samo przygotowanie, bez startu serwerów
+```
+
+Wygodne skróty: `./run.sh` (macOS/Linux), `run.bat` (Windows, dwuklik) — oba wołają `run.py`.
+
+Konto demo: `demo@smartvod.pl` / `demo` (przycisk „Zaloguj jako demo").
+
+## Struktura repozytorium
 
 ```
 .
-├── frontend/                                   — aplikacja (frontend SPA)
-│   ├── index.html                              — struktura 8 ekranów
-│   ├── css/style.css                           — stylowanie, design tokens, responsywność
-│   ├── js/app.js                               — logika SPA, dobór rekomendacji, stan
-│   ├── js/api.js                               — klient REST do backendu
-│   └── README.md                               — opis aplikacji i instrukcja uruchomienia
-├── backend/                                     — API FastAPI, baza i moduł rekomendacji
-│   ├── main.py                                 — endpointy REST
-│   ├── recommend.py / predict.py               — rekomendacje i model oceny
-│   ├── import_movielens.py / train_model.py    — import danych i trening
-│   └── seed_demo.py                            — konto demo
-├── run.sh                                       — uruchomienie backendu i frontendu
-├── zrzuty/                                      — zrzuty ekranu i diagramy do dokumentacji
-├── dokumentacja_smartvod_Robert_Pilczuk.docx   — dokumentacja (część wspólna + zakres R. Pilczuka)
-├── dokumentacja_smartvod_Mateusz_Pichur.docx   — dokumentacja (część wspólna + zakres M. Pichura)
-├── prezentacja_smartvod.pptx                   — prezentacja projektu (10–12 min)
-└── dokumentacja_smartvod.docx                  — wstępna wersja dokumentacji (materiał źródłowy)
+├── run.py                    — jedno polecenie: przygotowanie + uruchomienie (mac/Win/Linux)
+├── run.sh / run.bat          — wrappery na run.py
+├── backend/                  — API FastAPI, baza SQLite i moduł rekomendacji
+│   ├── main.py               — endpointy REST
+│   ├── recommend.py          — logika rekomendacji (hybryda: model + gatunki + nastrój)
+│   ├── predict.py            — model oceny i douczanie profilu użytkownika
+│   ├── import_movielens.py   — import zbioru MovieLens 1M do bazy
+│   ├── train_model.py        — trening modelu regresji liniowej
+│   ├── seed_demo.py          — konto demo
+│   ├── data/                 — pobrany ml-1m.zip (poza repo, patrz „Dane i licencja")
+│   ├── tests/                — testy pytest
+│   └── README.md             — opis backendu i endpointów
+├── frontend/                 — aplikacja (HTML/CSS/JS, 9 ekranów)
+│   ├── index.html            — struktura ekranów
+│   ├── css/style.css         — design tokens, responsywność
+│   ├── js/app.js             — logika SPA, dobór rekomendacji, stan
+│   ├── js/api.js             — klient REST do backendu
+│   └── tests/                — testy (wbudowany test runner Node)
+├── docs/                     — architektura.md, prezentacja.md
+└── dokumentacja/             — dokumentacja końcowa (.docx) i prezentacja (.pptx)
 ```
 
-## Uruchomienie aplikacji
+## Dane i licencja
 
-### Pełna aplikacja (backend + frontend)
+Aplikacja używa zbioru **MovieLens 1M** (GroupLens, University of Minnesota).
+Zgodnie z licencją GroupLens zbiór jest **wykorzystywany** do celów badawczych/
+edukacyjnych, ale **nie jest redystrybuowany** przez to repozytorium — `run.py`
+pobiera go bezpośrednio ze źródła przy pierwszym uruchomieniu i zapisuje w
+`backend/data/` (katalog poza repo). Baza `smartvod.db` i artefakty modelu są
+pochodnymi danych i również nie trafiają do repo — powstają lokalnie.
 
-Przygotowanie backendu (jednorazowo):
-
-```bash
-cd backend
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python import_movielens.py      # import MovieLens 1M (wymaga ~/Downloads/ml-1m.zip)
-python train_model.py           # trening modelu
-python seed_demo.py             # konto demo do prezentacji
-```
-
-Uruchomienie backendu i frontendu jedną komendą:
-
-```bash
-./run.sh
-# Backend:  http://127.0.0.1:8000
-# Frontend: http://127.0.0.1:8080
-```
-
-Konto demo: `demo@smartvod.pl` / `demo` (przycisk „Zaloguj jako demo").
-Szczegóły backendu i endpointów opisuje `backend/README.md`.
-
-### Sam frontend (tryb demo, bez backendu)
-
-Frontend działa też samodzielnie z lokalnym katalogiem filmów:
-
-```bash
-cd frontend
-python3 -m http.server 8080
-# następnie: http://127.0.0.1:8080
-```
+Źródło zbioru: <https://grouplens.org/datasets/movielens/1m/>
 
 ## Testy
 
 ```bash
 # Backend (pytest, osobna baza tymczasowa, bez modelu)
-cd backend && source venv/bin/activate
-pip install -r requirements-dev.txt
-python -m pytest
+backend/venv/bin/python -m pip install -r backend/requirements-dev.txt
+cd backend && venv/bin/python -m pytest
 
 # Frontend (wbudowany test runner Node, bez npm)
-cd frontend
-node --test tests/*.test.mjs
+cd frontend && node --test tests/*.test.mjs
 ```
 
 ## Architektura
 
 Aplikacja jest full-stack. Frontend (HTML, CSS, JavaScript) komunikuje się przez
-REST z backendem FastAPI, który liczy rekomendacje na danych MovieLens 1M
-zapisanych w SQLite. Rekomendacja łączy przewidywaną ocenę z modelu regresji
-liniowej z dopasowaniem gatunków, nastroju i popularnością filmu.
-
-Pełny opis architektury, danych, modelu i ograniczeń: `docs/architektura.md`.
+REST z backendem FastAPI, który liczy rekomendacje na danych MovieLens 1M w SQLite.
+Rekomendacja łączy przewidywaną ocenę z modelu regresji liniowej z dopasowaniem
+gatunków, nastroju i popularnością filmu. Pełny opis: `docs/architektura.md`.
 
 ## Podział pracy
 
 - **Robert Pilczuk** — koncepcja systemu, analiza wymagań, mechanizm rekomendacji,
-  model sygnałów odrzuceń, projekt schematu bazy danych, logika aplikacji (`app.js`),
+  model sygnałów odrzuceń, projekt schematu bazy, logika aplikacji (`app.js`),
   testowanie, dokumentacja końcowa.
 - **Mateusz Pichur** — projekt UI/UX (makiety w Figmie), system wizualny,
   struktura HTML, stylowanie CSS, responsywność, wstępna wersja dokumentacji.
 
-Szczegółowy zakres pracy każdej z osób opisano w rozdziale 6 odpowiedniej dokumentacji.
+Szczegółowy zakres pracy każdej osoby opisuje rozdział 6 odpowiedniej dokumentacji
+w katalogu `dokumentacja/`.
