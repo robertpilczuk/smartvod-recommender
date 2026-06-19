@@ -59,9 +59,11 @@ Konto demo: `demo@smartvod.pl` / `demo` (przycisk „Zaloguj jako demo").
 │   ├── js/app.js             — logika SPA, dobór rekomendacji, stan
 │   ├── js/api.js             — klient REST do backendu
 │   └── tests/                — testy (wbudowany test runner Node)
-├── docs/                     — architektura.md, prezentacja.md
-└── dokumentacja/             — dokumentacja końcowa (.docx) i prezentacja (.pptx)
+└── docs/                     — architektura.md, prezentacja.md
 ```
+
+Dokumentacja końcowa (`.docx`) i prezentacja (`.pptx`) są przekazywane osobno —
+nie trzymamy ich w repozytorium (duże pliki binarne, oddawane prowadzącemu).
 
 ## Dane i licencja
 
@@ -101,4 +103,4 @@ gatunków, nastroju i popularnością filmu. Pełny opis: `docs/architektura.md`
   struktura HTML, stylowanie CSS, responsywność, wstępna wersja dokumentacji.
 
 Szczegółowy zakres pracy każdej osoby opisuje rozdział 6 odpowiedniej dokumentacji
-w katalogu `dokumentacja/`.
+końcowej (przekazywanej osobno, poza repozytorium).
