@@ -14,6 +14,17 @@ Zespół: **Robert Pilczuk** i **Mateusz Pichur**. Prowadzący: mgr inż. Tomasz
 Wymagania: **Python 3.10+** oraz połączenie z internetem (przy pierwszym
 uruchomieniu pobierany jest zbiór danych). Nic więcej nie trzeba instalować ręcznie.
 
+Od zera — skopiuj i wklej (macOS/Linux):
+
+```bash
+git clone https://github.com/robertpilczuk/smartvod-recommender.git
+cd smartvod-recommender
+python3 run.py
+```
+
+Na Windows analogicznie (`python run.py`) albo dwuklik w `run.bat`. W już sklonowanym
+katalogu wystarczy:
+
 ```bash
 python run.py
 ```
